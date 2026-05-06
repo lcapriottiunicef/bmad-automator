@@ -300,6 +300,16 @@ verify_qa_prompts_absent() {
   assert_string_not_contains "Validate with: .claude/skills/bmad-qa-generate-e2e-tests/checklist.md" "$auto_claude"
 }
 
+verify_qa_prompts_skill_only() {
+  local root="$1"
+  local story_dir="$root/.claude/skills/bmad-story-automator"
+  local auto_claude
+
+  auto_claude="$(cd "$root" && "$story_dir/scripts/story-automator" tmux-wrapper build-cmd auto 5.3 --agent claude)"
+  assert_string_contains "READ this skill first: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
+  assert_string_not_contains "READ this workflow file next: .claude/skills/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
+}
+
 verify_legacy_backups() {
   local root="$1"
   compgen -G "$root/_bmad/bmm/4-implementation/bmad-story-automator.backup-*" >/dev/null || {
@@ -378,9 +388,14 @@ run_optional_qa_partial_case() {
   make_fixture "$root" "$qa_mode" no full legacy
   npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1
   verify_common_install "$root"
-  verify_qa_prompts_absent "$root"
-  assert_contains "Optional skill incomplete: .claude/skills/bmad-qa-generate-e2e-tests requires both SKILL.md and workflow.md|workflow.yaml." "$install_log"
-  assert_not_contains "qa-generate-e2e-tests:" "$install_log"
+  if [ "$qa_mode" = "workflow-only" ]; then
+    verify_qa_prompts_absent "$root"
+    assert_contains "Optional skill incomplete: missing .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md." "$install_log"
+    assert_not_contains "qa-generate-e2e-tests:" "$install_log"
+  else
+    verify_qa_prompts_skill_only "$root"
+    assert_contains "qa-generate-e2e-tests: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$install_log"
+  fi
 }
 
 pack_fixture_tarball
@@ -388,8 +403,8 @@ run_case pure-with-qa yes no
 run_case pure-without-qa no no
 run_case pure-migrates-legacy yes yes
 run_case repointed-wrapper-survives yes no full repointed
+run_case skill-only-deps no no skill-only
 run_failure_case workflow-only-deps workflow-only "Required skill file missing: .claude/skills/bmad-create-story/SKILL.md"
-run_failure_case skill-only-deps skill-only "Required skill workflow missing: .claude/skills/bmad-create-story/workflow.md"
 run_optional_qa_partial_case partial-qa-workflow-only workflow-only
 run_optional_qa_partial_case partial-qa-skill-only skill-only
 

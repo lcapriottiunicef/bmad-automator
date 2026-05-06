@@ -116,43 +116,28 @@ resolve_workflow_path() {
   return 1
 }
 
-resolve_required_skill_workflow() {
+resolve_required_skill() {
   local skill_name="$1"
   local skill_path
-  local workflow_path
   skill_path="$(skill_file "$skill_name")"
   [ -f "$TARGET_ROOT/$skill_path" ] || err "Required skill file missing: $skill_path"
-  workflow_path="$(resolve_workflow_path \
-    ".claude/skills/$skill_name/workflow.md" \
-    ".claude/skills/$skill_name/workflow.yaml")" \
-    || err "Required skill workflow missing: .claude/skills/$skill_name/workflow.md"
-  printf '%s\n' "$workflow_path"
+  printf '%s\n' "$skill_path"
 }
 
-resolve_optional_skill_workflow() {
+resolve_optional_skill() {
   local skill_name="$1"
   local skill_path
-  local workflow_path=""
-  local has_skill=0
-  local has_workflow=0
 
   skill_path="$(skill_file "$skill_name")"
   if [ -f "$TARGET_ROOT/$skill_path" ]; then
-    has_skill=1
-  fi
-  if workflow_path="$(resolve_workflow_path \
-    ".claude/skills/$skill_name/workflow.md" \
-    ".claude/skills/$skill_name/workflow.yaml")"; then
-    has_workflow=1
-  fi
-
-  if [ "$has_skill" -eq 1 ] && [ "$has_workflow" -eq 1 ]; then
-    printf '%s\n' "$workflow_path"
+    printf '%s\n' "$skill_path"
     return 0
   fi
 
-  if [ "$has_skill" -eq 1 ] || [ "$has_workflow" -eq 1 ]; then
-    warn "Optional skill incomplete: .claude/skills/$skill_name requires both SKILL.md and workflow.md|workflow.yaml. Story-automator still installs, but run with 'Skip Automate' enabled unless you fix that skill."
+  if resolve_workflow_path \
+    ".claude/skills/$skill_name/workflow.md" \
+    ".claude/skills/$skill_name/workflow.yaml" >/dev/null; then
+    warn "Optional skill incomplete: missing .claude/skills/$skill_name/SKILL.md. Story-automator still installs, but run with 'Skip Automate' enabled unless you fix that skill."
   fi
   return 1
 }
@@ -190,12 +175,12 @@ SOURCE_LICENSE="$SOURCE_ROOT/LICENSE"
 [ -f "$SOURCE_README" ] || err "Missing runtime README: $SOURCE_README"
 [ -f "$SOURCE_LICENSE" ] || err "Missing runtime license: $SOURCE_LICENSE"
 
-CREATE_STORY_PATH="$(resolve_required_skill_workflow "bmad-create-story")"
-DEV_STORY_PATH="$(resolve_required_skill_workflow "bmad-dev-story")"
-RETROSPECTIVE_PATH="$(resolve_required_skill_workflow "bmad-retrospective")"
+CREATE_STORY_PATH="$(resolve_required_skill "bmad-create-story")"
+DEV_STORY_PATH="$(resolve_required_skill "bmad-dev-story")"
+RETROSPECTIVE_PATH="$(resolve_required_skill "bmad-retrospective")"
 
 OPTIONAL_AUTOMATE_PATH=""
-if ! OPTIONAL_AUTOMATE_PATH="$(resolve_optional_skill_workflow "bmad-qa-generate-e2e-tests")"; then
+if ! OPTIONAL_AUTOMATE_PATH="$(resolve_optional_skill "bmad-qa-generate-e2e-tests")"; then
   if [ ! -f "$TARGET_ROOT/$OPTIONAL_AUTOMATE_SKILL" ]; then
     warn "Optional skill not found: .claude/skills/bmad-qa-generate-e2e-tests. Story-automator still installs, but run with 'Skip Automate' enabled unless you install that skill."
   fi
@@ -222,11 +207,11 @@ cleanup_obsolete_command_shims
 echo "Installed story-automator skill into: $TARGET_STORY"
 echo "Installed story-automator-review skill into: $TARGET_STORY_REVIEW"
 echo "Runtime helper: $TARGET_STORY/scripts/story-automator"
-echo "Verified dependency skill entrypoints:"
-echo "  create-story: $CREATE_STORY_SKILL + $CREATE_STORY_PATH"
-echo "  dev-story: $DEV_STORY_SKILL + $DEV_STORY_PATH"
-echo "  retrospective: $RETROSPECTIVE_SKILL + $RETROSPECTIVE_PATH"
+echo "Verified dependency skills:"
+echo "  create-story: $CREATE_STORY_PATH"
+echo "  dev-story: $DEV_STORY_PATH"
+echo "  retrospective: $RETROSPECTIVE_PATH"
 if [ -n "$OPTIONAL_AUTOMATE_PATH" ]; then
-  echo "  qa-generate-e2e-tests: $OPTIONAL_AUTOMATE_SKILL + $OPTIONAL_AUTOMATE_PATH"
+  echo "  qa-generate-e2e-tests: $OPTIONAL_AUTOMATE_PATH"
 fi
 echo "Claude command wrappers are not generated; invoke the bmad-story-automator skill directly."

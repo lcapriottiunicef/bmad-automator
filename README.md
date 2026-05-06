@@ -124,12 +124,12 @@ Host requirements:
 Target project requirements:
 
 - `_bmad/` project directory
-- `.claude/skills/bmad-create-story`
-- `.claude/skills/bmad-dev-story`
-- `.claude/skills/bmad-retrospective`
-- optional `.claude/skills/bmad-qa-generate-e2e-tests`
+- `.claude/skills/bmad-create-story/SKILL.md`
+- `.claude/skills/bmad-dev-story/SKILL.md`
+- `.claude/skills/bmad-retrospective/SKILL.md`
+- optional `.claude/skills/bmad-qa-generate-e2e-tests/SKILL.md`
 
-If the QA skill is missing, install still succeeds. Run Story Automator with `Skip Automate = true` unless the QA skill is installed.
+Dependency skill internals such as `workflow.md` are optional. If the QA skill is missing, install still succeeds. Run Story Automator with `Skip Automate = true` unless the QA skill is installed.
 
 ## Install Verification
 

@@ -374,9 +374,11 @@ def _resolve_step_assets(step: str, assets: dict[str, Any], project_root: Path) 
         "checklist": _resolve_candidate_file(skill_dir, assets.get("checklistCandidates"), project_root, required, "checklist", step),
         "template": _resolve_candidate_file(skill_dir, assets.get("templateCandidates"), project_root, required, "template", step),
     }
-    if ("skill" not in required and "workflow" not in required) and bool(files["skill"]) != bool(files["workflow"]):
-        files["skill"] = ""
+    if not files["skill"]:
         files["workflow"] = ""
+        files["instructions"] = ""
+        files["checklist"] = ""
+        files["template"] = ""
     return files
 
 

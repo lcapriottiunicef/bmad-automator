@@ -38,7 +38,7 @@
         "instructionsCandidates": ["discover-inputs.md"],
         "checklistCandidates": ["checklist.md"],
         "templateCandidates": ["template.md"],
-        "required": ["skill", "workflow"]
+        "required": ["skill"]
       },
       "prompt": {
         "templateFile": "data/prompts/create.md",
@@ -63,7 +63,7 @@
         "instructionsCandidates": [],
         "checklistCandidates": ["checklist.md"],
         "templateCandidates": [],
-        "required": ["skill", "workflow"]
+        "required": ["skill"]
       },
       "prompt": {
         "templateFile": "data/prompts/dev.md",
@@ -105,7 +105,7 @@
         "instructionsCandidates": ["instructions.xml"],
         "checklistCandidates": ["checklist.md"],
         "templateCandidates": [],
-        "required": ["skill", "workflow"]
+        "required": ["skill"]
       },
       "prompt": {
         "templateFile": "data/prompts/review.md",
@@ -129,7 +129,7 @@
         "instructionsCandidates": [],
         "checklistCandidates": [],
         "templateCandidates": [],
-        "required": ["skill", "workflow"]
+        "required": ["skill"]
       },
       "prompt": {
         "templateFile": "data/prompts/retro.md",

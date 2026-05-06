@@ -46,15 +46,17 @@ flowchart TD
 
 The target project must already contain these BMAD skills:
 
-- `.claude/skills/bmad-create-story`
-- `.claude/skills/bmad-dev-story`
-- `.claude/skills/bmad-retrospective`
+- `.claude/skills/bmad-create-story/SKILL.md`
+- `.claude/skills/bmad-dev-story/SKILL.md`
+- `.claude/skills/bmad-retrospective/SKILL.md`
+
+Only the `SKILL.md` entrypoint is required for sibling BMAD skills. Extra files such as `workflow.md`, `workflow.yaml`, checklists, and templates are resolved when present, but install must not depend on those internal layouts.
 
 Optional:
 
-- `.claude/skills/bmad-qa-generate-e2e-tests`
+- `.claude/skills/bmad-qa-generate-e2e-tests/SKILL.md`
 
-If the optional QA skill is missing or incomplete:
+If the optional QA skill is missing:
 
 - install still succeeds
 - a warning is printed
@@ -107,7 +109,7 @@ Repo layout:
 ## Operator Notes
 
 - install target must be a BMAD project with `_bmad/`
-- required sibling skills must already exist
+- required sibling skill `SKILL.md` files must already exist
 - the review workflow is installed alongside the main orchestrator because review gating is part of completion semantics
 
 ## Read Next

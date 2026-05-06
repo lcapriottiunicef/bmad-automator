@@ -60,6 +60,20 @@ class RuntimePolicyTests(unittest.TestCase):
         with self.assertRaises(PolicyError):
             load_effective_policy(str(self.project_root))
 
+    def test_dependency_workflow_file_optional(self) -> None:
+        (self.project_root / ".claude" / "skills" / "bmad-create-story" / "workflow.md").unlink()
+        policy = load_effective_policy(str(self.project_root))
+        files = policy["steps"]["create"]["assets"]["files"]
+        self.assertEqual(files["skill"], ".claude/skills/bmad-create-story/SKILL.md")
+        self.assertEqual(files["workflow"], "")
+
+    def test_optional_workflow_without_skill_ignored(self) -> None:
+        (self.project_root / ".claude" / "skills" / "bmad-qa-generate-e2e-tests" / "SKILL.md").unlink()
+        policy = load_effective_policy(str(self.project_root))
+        files = policy["steps"]["auto"]["assets"]["files"]
+        self.assertEqual(files["skill"], "")
+        self.assertEqual(files["workflow"], "")
+
     def test_snapshot_hash_stable(self) -> None:
         first = snapshot_effective_policy(str(self.project_root))
         second = snapshot_effective_policy(str(self.project_root))
