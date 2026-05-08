@@ -1,7 +1,7 @@
 {
   "name": "bmad-story-automator",
   "description": "BMAD story automation skills for create/dev/QA/review/retro orchestration.",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "author": {
     "name": "BMAD",
     "email": "bmad.directory@gmail.com"

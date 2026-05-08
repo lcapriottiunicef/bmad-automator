@@ -1,6 +1,6 @@
 {
   "name": "bmad-story-automator",
-  "version": "1.14.1",
+  "version": "1.14.2",
   "description": "Install the BMAD story-automator self-contained skills into a BMAD project.",
   "license": "MIT",
   "bin": {
