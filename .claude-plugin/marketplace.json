@@ -3,22 +3,22 @@
   "description": "BMAD Claude Code plugins for story automation and workflow orchestration.",
   "owner": {
     "name": "bma-d",
-    "email": "bmad.directory@gmail.com"
+    "email": "support@bmadcode.com"
   },
   "plugins": [
     {
-      "name": "bmad-story-automator",
+      "name": "bmad-automator",
       "source": {
         "source": "github",
-        "repo": "bma-d/bmad-story-automator"
+        "repo": "bmad-code-org/bmad-automator"
       },
       "description": "BMAD story automation skills for create/dev/QA/review/retro orchestration.",
       "author": {
         "name": "bma-d",
-        "email": "bmad.directory@gmail.com"
+        "email": "support@bmadcode.com"
       },
-      "homepage": "https://github.com/bma-d/bmad-story-automator#readme",
-      "repository": "https://github.com/bma-d/bmad-story-automator",
+      "homepage": "https://github.com/bmad-code-org/bmad-automator#readme",
+      "repository": "https://github.com/bmad-code-org/bmad-automator",
       "license": "MIT",
       "keywords": [
         "bmad",

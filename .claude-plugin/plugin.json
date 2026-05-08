@@ -1,15 +1,15 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
-  "name": "bmad-story-automator",
+  "name": "bmad-automator",
   "description": "BMAD story automation skills for create/dev/QA/review/retro orchestration.",
   "version": "1.14.2",
   "author": {
     "name": "bma-d",
-    "email": "bmad.directory@gmail.com",
-    "url": "https://github.com/bma-d"
+    "email": "support@bmadcode.com",
+    "url": "https://github.com/bmad-code-org"
   },
-  "homepage": "https://github.com/bma-d/bmad-story-automator#readme",
-  "repository": "https://github.com/bma-d/bmad-story-automator",
+  "homepage": "https://github.com/bmad-code-org/bmad-automator#readme",
+  "repository": "https://github.com/bmad-code-org/bmad-automator",
   "license": "MIT",
   "keywords": [
     "bmad",

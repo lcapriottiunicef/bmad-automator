@@ -45,7 +45,7 @@ Local marketplace test:
 
 ```text
 /plugin marketplace add .
-/plugin install bmad-story-automator@bmad-plugins
+/plugin install bmad-automator@bmad-plugins
 ```
 
 ## Quickstart
