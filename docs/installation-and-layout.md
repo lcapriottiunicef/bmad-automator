@@ -33,9 +33,14 @@ Supported roots:
 - `.codex/skills`
 
 Unlike the older workflow-root layout, this Python port installs into the pure skill tree.
-Use `.agents/skills` for provider-agnostic or multi-provider projects. Use `.claude/skills` or `.codex/skills` when provider-specific isolation is useful. For Codex, installed skill assets live under a supported root such as `.agents/skills` or `.codex/skills`, while stop-hook and runtime config files are managed under `.codex/`.
+Use `.agents/skills` when you want a shared skill tree that multiple runtimes can see. Use `.claude/skills` or `.codex/skills` when provider-specific isolation is useful. Runtime provider/layout is still resolved separately from install targets: explicit provider env wins first, then active skill-root context, then project-layout fallback. In that fallback, active `.agents` or `.codex` roots map to Codex-style hook/config layout, while `.claude` maps to Claude-style layout.
 
-There is no runtime precedence among these roots. Claude-only, Codex-only, and mixed projects are supported. If more than one root contains all required dependency `SKILL.md` files, the installer updates each qualifying root. If a root is present but missing required skill entrypoints while another root qualifies, the incomplete root is left unchanged.
+Installer behavior and runtime behavior are different:
+
+- The installer has no precedence among qualifying roots; it updates every qualifying root it finds.
+- Runtime resolution does have an order for active execution context: explicit `BMAD_SKILLS_ROOT`, current installed helper root, project `.agents`, project `.claude`, project `.codex`, then home roots.
+
+Claude-only, Codex-only, and mixed projects are supported. If more than one root contains all required dependency `SKILL.md` files, the installer updates each qualifying root. If a root is present but missing required skill entrypoints while another root qualifies, the incomplete root is left unchanged.
 
 The repo-local source skills live under `skills/`. The installer copies those same directly usable skill folders into each qualifying root.
 

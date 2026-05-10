@@ -103,16 +103,30 @@ If a long command path fails:
 
 ## Useful Checks
 
+Resolve the installed helper first:
+
 ```bash
-<installed-skill-root>/bmad-story-automator/scripts/story-automator tmux-wrapper list --project-only
+scripts=""
+for root in .agents/skills .claude/skills .codex/skills; do
+  candidate="$root/bmad-story-automator/scripts/story-automator"
+  if [ -x "$candidate" ]; then
+    scripts="$candidate"
+    break
+  fi
+done
+[ -n "$scripts" ] || { echo "story-automator not found in supported skill roots" >&2; exit 1; }
 ```
 
 ```bash
-<installed-skill-root>/bmad-story-automator/scripts/story-automator orchestrator-helper state-list _bmad-output/story-automator
+"$scripts" tmux-wrapper list --project-only
 ```
 
 ```bash
-<installed-skill-root>/bmad-story-automator/scripts/story-automator orchestrator-helper verify-code-review 1.2
+"$scripts" orchestrator-helper state-list _bmad-output/story-automator
+```
+
+```bash
+"$scripts" orchestrator-helper verify-code-review 1.2
 ```
 
 ## Read Next

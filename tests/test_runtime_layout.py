@@ -39,33 +39,33 @@ class RuntimeLayoutTests(unittest.TestCase):
         self._install_bundle(".agents")
 
         self.assertEqual(runtime_provider(str(self.project_root)), "codex")
-        self.assertEqual(active_marker_path(self.project_root), self.project_root / ".agents" / ".story-automator-active")
+        self.assertEqual(active_marker_path(self.project_root), (self.project_root / ".agents" / ".story-automator-active").resolve())
         self.assertEqual(active_marker_project_entry(self.project_root), ".agents/.story-automator-active")
 
     def test_codex_project_skill_root_uses_codex_marker(self) -> None:
         self._install_bundle(".codex")
 
         self.assertEqual(runtime_provider(str(self.project_root)), "codex")
-        self.assertEqual(active_marker_path(self.project_root), self.project_root / ".codex" / ".story-automator-active")
+        self.assertEqual(active_marker_path(self.project_root), (self.project_root / ".codex" / ".story-automator-active").resolve())
         self.assertEqual(active_marker_project_entry(self.project_root), ".codex/.story-automator-active")
 
     def test_claude_project_skill_root_uses_claude_marker(self) -> None:
         self._install_bundle(".claude")
 
         self.assertEqual(runtime_provider(str(self.project_root)), "claude")
-        self.assertEqual(active_marker_path(self.project_root), self.project_root / ".claude" / ".story-automator-active")
+        self.assertEqual(active_marker_path(self.project_root), (self.project_root / ".claude" / ".story-automator-active").resolve())
         self.assertEqual(active_marker_project_entry(self.project_root), ".claude/.story-automator-active")
 
     def test_codex_provider_without_installed_skill_uses_agents_marker(self) -> None:
         with patch.dict(os.environ, {"BMAD_RUNTIME_PROVIDER": "codex"}, clear=False):
-            self.assertEqual(active_marker_path(self.project_root), self.project_root / ".agents" / ".story-automator-active")
+            self.assertEqual(active_marker_path(self.project_root), (self.project_root / ".agents" / ".story-automator-active").resolve())
 
     def test_ai_agent_does_not_override_runtime_provider(self) -> None:
         self._install_bundle(".claude")
 
         with patch.dict(os.environ, {"AI_AGENT": "codex"}, clear=False):
             self.assertEqual(runtime_provider(str(self.project_root)), "claude")
-            self.assertEqual(active_marker_path(self.project_root), self.project_root / ".claude" / ".story-automator-active")
+            self.assertEqual(active_marker_path(self.project_root), (self.project_root / ".claude" / ".story-automator-active").resolve())
 
     def test_current_skill_root_wins_when_multiple_runtime_roots_exist(self) -> None:
         self._install_bundle(".agents")
@@ -76,7 +76,7 @@ class RuntimeLayoutTests(unittest.TestCase):
 
         with patch.object(runtime_layout, "__file__", str(fake_file)):
             self.assertEqual(runtime_layout.runtime_provider(str(self.project_root)), "claude")
-            self.assertEqual(runtime_layout.active_marker_path(self.project_root), self.project_root / ".claude" / ".story-automator-active")
+            self.assertEqual(runtime_layout.active_marker_path(self.project_root), (self.project_root / ".claude" / ".story-automator-active").resolve())
 
     def test_mixed_project_source_execution_uses_preferred_skill_root(self) -> None:
         self._install_bundle(".agents")
@@ -90,7 +90,7 @@ class RuntimeLayoutTests(unittest.TestCase):
         self.assertEqual(resolved, (self.project_root / ".agents" / "skills" / "bmad-story-automator").resolve())
         self.assertEqual(code, 0)
         payload = json.loads(stdout.getvalue())
-        self.assertEqual(payload["file"], str(self.project_root / ".agents" / ".story-automator-active"))
+        self.assertEqual(payload["file"], str((self.project_root / ".agents" / ".story-automator-active").resolve()))
 
     def test_explicit_skill_root_can_point_at_skill_directory(self) -> None:
         self._install_bundle(".agents")
@@ -161,7 +161,7 @@ class RuntimeLayoutTests(unittest.TestCase):
 
         self.assertEqual(code, 0)
         payload = json.loads(stdout.getvalue())
-        self.assertEqual(payload["file"], str(self.project_root / ".agents" / ".story-automator-active"))
+        self.assertEqual(payload["file"], str((self.project_root / ".agents" / ".story-automator-active").resolve()))
         self.assertEqual(payload["entry"], ".agents/.story-automator-active")
 
     def test_marker_create_and_remove_use_active_runtime_layout(self) -> None:
