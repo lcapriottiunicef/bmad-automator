@@ -81,9 +81,12 @@ def ensure_codex_stop_hook(*, project_root: Path, command: str, timeout: int) ->
     hook_result = hook_update.result
     config_result = config_update.result
     changed = hook_result.changed or config_result.changed
+    trusted = _codex_project_is_trusted(config_path, project_root)
 
     if changed:
         reason = "codex_hook_configured"
+    elif not trusted:
+        reason = "pending_trust"
     elif hook_result.written:
         reason = hook_result.reason
     else:
@@ -100,17 +103,31 @@ def ensure_codex_stop_hook(*, project_root: Path, command: str, timeout: int) ->
         "configChanged": config_result.changed,
         "hooksReason": hook_result.reason,
         "configReason": config_result.reason,
-        "message": _codex_hook_message(changed),
+        "trusted": trusted,
+        "verificationState": _codex_verification_state(changed, trusted),
+        "message": _codex_hook_message(changed, trusted),
     }
 
 
-def _codex_hook_message(changed: bool) -> str:
+def _codex_verification_state(changed: bool, trusted: bool) -> str:
     if changed:
-        return (
-            "Codex Stop hook configured in .codex/hooks.json and codex_hooks enabled in "
-            ".codex/config.toml. Restart Codex from a trusted project session for the hook to load."
+        return "configured"
+    if trusted:
+        return "verified"
+    return "pending_trust"
+
+
+def _codex_hook_message(changed: bool, trusted: bool) -> str:
+    if changed:
+        suffix = (
+            "Restart Codex from this trusted project session for the hook to load."
+            if trusted
+            else "Trust this project in Codex, then restart Codex so the hook can load."
         )
-    return "Codex Stop hook verified."
+        return "Codex Stop hook configured in .codex/hooks.json and codex_hooks enabled in .codex/config.toml. " + suffix
+    if trusted:
+        return "Codex Stop hook verified."
+    return "Codex Stop hook is configured on disk, but this project is not yet trusted in Codex."
 
 
 def _claude_hook_message(changed: bool) -> str:
@@ -301,6 +318,29 @@ def _parse_toml(text: str, path: Path) -> dict[str, Any]:
         return tomllib.loads(text)
     except tomllib.TOMLDecodeError as exc:
         raise HookConfigError("invalid_toml", path, str(exc)) from exc
+
+
+def _codex_project_is_trusted(config_path: Path, project_root: Path) -> bool:
+    if not config_path.exists():
+        return False
+    parsed = _parse_toml(config_path.read_text(encoding="utf-8"), config_path)
+    projects = parsed.get("projects", {})
+    if not isinstance(projects, dict):
+        return False
+    resolved_root = project_root.resolve()
+    for raw_key, raw_config in projects.items():
+        if not isinstance(raw_key, str) or not isinstance(raw_config, dict):
+            continue
+        try:
+            if Path(raw_key).expanduser().resolve() != resolved_root:
+                continue
+        except OSError:
+            if raw_key != str(resolved_root):
+                continue
+        trust_level = str(raw_config.get("trust_level") or "").strip().lower()
+        if trust_level == "trusted":
+            return True
+    return False
 
 
 def _set_features_codex_hooks(text: str) -> str:

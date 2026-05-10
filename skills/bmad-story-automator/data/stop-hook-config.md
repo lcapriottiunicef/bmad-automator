@@ -34,8 +34,8 @@ When running story-automator on multiple projects at the same time:
 
 ### How It Works
 
-1. Stop hook uses the agent's current working directory as the active project root
-2. Run the orchestrator from the project root so the marker resolves under the active runtime layout
+1. The installed hook command exports `PROJECT_ROOT` for the target project before invoking `story-automator stop-hook`
+2. The stop hook resolves the marker from `PROJECT_ROOT`, not from the caller's ambient working directory
 3. Project A's stop hook only sees Project A's marker
 4. Project B's stop hook only sees Project B's marker
 
@@ -58,11 +58,12 @@ Where `project_hash` = first 8 chars of MD5 hash of project root path.
 The helper selects hook configuration syntax from the active provider:
 - `BMAD_RUNTIME_PROVIDER`
 - `STORY_AUTOMATOR_RUNTIME_PROVIDER`
-- `AI_AGENT`
 
 Set one of these to `claude` or `codex` to force the provider. If none is set, the helper infers the provider from the installed skill root.
 
-The provider decides which hook files are written. Marker location is resolved separately and follows the active installed story-automator skill root when possible, so the hook and orchestrator read the same marker file in Claude-only, Codex-only, and mixed installs.
+`AI_AGENT` only selects child-agent runtime for spawned work. It does not decide which top-level hook files are written.
+
+The provider decides which hook files are written. Marker location is resolved separately and follows the active installed story-automator skill root when possible. For example, a Codex run using a migrated `.claude/skills/bmad-story-automator` install still uses the `.claude/.story-automator-active` marker so the hook and orchestrator read the same file.
 
 For Claude, add this to the target project's `.claude/settings.json`:
 
@@ -111,6 +112,8 @@ Then add this to `.codex/hooks.json`:
   }
 }
 ```
+
+Codex trust is separate from hook configuration. A project can have the Story Automator hook written to disk and still require trust approval before Codex will run it. `ensure-stop-hook` now reports that state as pending trust instead of verified.
 
 ### Binary Path is Always Absolute
 

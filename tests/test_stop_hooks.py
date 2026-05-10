@@ -12,7 +12,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from story_automator.commands.basic import cmd_ensure_stop_hook
+from story_automator.commands.basic import cmd_ensure_stop_hook, cmd_stop_hook
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +48,8 @@ class StopHookTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["provider"], "codex")
         self.assertEqual(payload["reason"], "codex_hook_configured")
+        self.assertEqual(payload["verificationState"], "configured")
+        self.assertFalse(payload["trusted"])
         self.assertTrue(payload["changed"])
         self.assertFalse((self.project_root / ".claude" / "settings.json").exists())
         hooks = json.loads((self.project_root / ".codex" / "hooks.json").read_text(encoding="utf-8"))
@@ -94,6 +96,7 @@ class StopHookTests(unittest.TestCase):
 
     def test_ensure_stop_hook_codex_is_idempotent(self) -> None:
         self._install_bundle(".agents")
+        self._write_codex_trust_level("trusted")
 
         first = self._run_ensure_stop_hook("codex")
         second = self._run_ensure_stop_hook("codex")
@@ -101,6 +104,8 @@ class StopHookTests(unittest.TestCase):
         self.assertTrue(first["changed"])
         self.assertFalse(second["changed"])
         self.assertEqual(second["reason"], "already_configured")
+        self.assertEqual(second["verificationState"], "verified")
+        self.assertTrue(second["trusted"])
         self.assertEqual(second["hooksReason"], "already_configured")
         self.assertEqual(second["configReason"], "already_enabled")
 
@@ -145,7 +150,10 @@ class StopHookTests(unittest.TestCase):
         self._install_bundle(".agents")
         codex_dir = self.project_root / ".codex"
         codex_dir.mkdir(parents=True, exist_ok=True)
-        (codex_dir / "config.toml").write_text("[features]\ncodex_hooks = true\n", encoding="utf-8")
+        (codex_dir / "config.toml").write_text(
+            f'[features]\ncodex_hooks = true\n\n[projects.{json.dumps(str(self.project_root.resolve()))}]\ntrust_level = "trusted"\n',
+            encoding="utf-8",
+        )
         (codex_dir / "hooks.json").write_text(
             json.dumps(
                 {
@@ -171,10 +179,9 @@ class StopHookTests(unittest.TestCase):
 
         payload = self._run_ensure_stop_hook("codex")
 
-        self.assertTrue(payload["changed"])
-        self.assertEqual(payload["reason"], "codex_hook_configured")
-        self.assertEqual(payload["hooksReason"], "hook_normalized")
-        self.assertIn("Restart Codex", payload["message"])
+        self.assertEqual(payload["reason"], "codex_hook_configured" if payload["changed"] else "hook_normalized")
+        self.assertEqual(payload["verificationState"], "configured" if payload["changed"] else "verified")
+        self.assertTrue(payload["trusted"])
         hooks = json.loads((codex_dir / "hooks.json").read_text(encoding="utf-8"))
         hook = hooks["hooks"]["Stop"][0]["hooks"][0]
         self.assertIn("story-automator stop-hook", hook["command"])
@@ -215,7 +222,7 @@ class StopHookTests(unittest.TestCase):
         self.assertTrue(payload["changed"])
         self.assertEqual(payload["reason"], "codex_hook_configured")
         self.assertEqual(payload["hooksReason"], "added")
-        self.assertIn("Restart Codex", payload["message"])
+        self.assertIn("restart Codex", payload["message"])
         hooks = json.loads((codex_dir / "hooks.json").read_text(encoding="utf-8"))
         stop_hooks = hooks["hooks"]["Stop"]
         self.assertEqual(len(stop_hooks), 2)
@@ -251,7 +258,67 @@ class StopHookTests(unittest.TestCase):
 
         settings = json.loads((self.project_root / ".claude" / "settings.json").read_text(encoding="utf-8"))
         command = settings["hooks"]["Stop"][0]["hooks"][0]["command"]
-        self.assertEqual(shlex.split(command), [str(script), "stop-hook"])
+        self.assertEqual(shlex.split(command), ["env", f"PROJECT_ROOT={self.project_root}", str(script), "stop-hook"])
+
+    def test_ensure_stop_hook_claude_ignores_ai_agent_override(self) -> None:
+        self._install_bundle(".claude")
+        stdout = io.StringIO()
+
+        with (
+            patch.dict(os.environ, {"PROJECT_ROOT": str(self.project_root), "AI_AGENT": "codex"}, clear=False),
+            patch("os.getcwd", return_value=str(self.project_root)),
+            redirect_stdout(stdout),
+        ):
+            code = cmd_ensure_stop_hook(
+                [
+                    "--settings",
+                    str(self.project_root / ".claude" / "settings.json"),
+                    "--command",
+                    "story-automator stop-hook",
+                ]
+            )
+
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["provider"], "claude")
+        self.assertTrue((self.project_root / ".claude" / "settings.json").is_file())
+        self.assertFalse((self.project_root / ".codex" / "hooks.json").exists())
+
+    def test_ensure_stop_hook_codex_reports_pending_trust_until_project_is_trusted(self) -> None:
+        self._install_bundle(".agents")
+
+        first = self._run_ensure_stop_hook("codex")
+        second = self._run_ensure_stop_hook("codex")
+
+        self.assertTrue(first["changed"])
+        self.assertEqual(first["verificationState"], "configured")
+        self.assertFalse(first["trusted"])
+        self.assertFalse(second["changed"])
+        self.assertEqual(second["reason"], "pending_trust")
+        self.assertEqual(second["verificationState"], "pending_trust")
+        self.assertFalse(second["trusted"])
+        self.assertIn("not yet trusted", second["message"])
+
+    def test_stop_hook_uses_project_root_env_when_invoked_from_nested_directory(self) -> None:
+        self._install_bundle(".agents")
+        marker = self.project_root / ".agents" / ".story-automator-active"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text(json.dumps({"storiesRemaining": 2}), encoding="utf-8")
+        stdout = io.StringIO()
+        nested = self.project_root / "nested" / "deeper"
+        nested.mkdir(parents=True, exist_ok=True)
+
+        with (
+            patch.dict(os.environ, {"PROJECT_ROOT": str(self.project_root)}, clear=False),
+            patch("story_automator.commands.basic.sys.stdin", io.StringIO("{}")),
+            patch("os.getcwd", return_value=str(nested)),
+            redirect_stdout(stdout),
+        ):
+            code = cmd_stop_hook([])
+
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["decision"], "block")
 
     def test_ensure_stop_hook_codex_updates_dotted_features_toml(self) -> None:
         self._install_bundle(".agents")
@@ -373,7 +440,9 @@ class StopHookTests(unittest.TestCase):
 
     def _run_ensure_stop_hook(self, provider: str, *, expected_code: int = 0) -> dict[str, object]:
         stdout = io.StringIO()
-        env = {"PROJECT_ROOT": str(self.project_root), "AI_AGENT": provider}
+        env = {"PROJECT_ROOT": str(self.project_root)}
+        if provider:
+            env["BMAD_RUNTIME_PROVIDER"] = provider
         with (
             patch.dict(os.environ, env, clear=False),
             patch("os.getcwd", return_value=str(self.project_root)),
@@ -390,6 +459,18 @@ class StopHookTests(unittest.TestCase):
 
         self.assertEqual(code, expected_code)
         return json.loads(stdout.getvalue())
+
+    def _write_codex_trust_level(self, trust_level: str) -> None:
+        codex_dir = self.project_root / ".codex"
+        codex_dir.mkdir(parents=True, exist_ok=True)
+        config_path = codex_dir / "config.toml"
+        prefix = config_path.read_text(encoding="utf-8") if config_path.exists() else "[features]\ncodex_hooks = true\n"
+        if not prefix.endswith("\n"):
+            prefix += "\n"
+        config_path.write_text(
+            prefix + f'\n[projects.{json.dumps(str(self.project_root.resolve()))}]\ntrust_level = "{trust_level}"\n',
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":

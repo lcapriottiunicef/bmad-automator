@@ -181,7 +181,7 @@ def _build_cmd(args: list[str]) -> int:
     except (OSError, PolicyError) as exc:
         print(str(exc), file=__import__("sys").stderr)
         return 1
-    ai_command = os.environ.get("AI_COMMAND")
+    ai_command = os.environ.get("AI_COMMAND", "").strip()
     if ai_command and not os.environ.get("AI_AGENT"):
         cli = ai_command
     elif agent != "codex":
@@ -288,7 +288,7 @@ def cmd_monitor_session(args: list[str]) -> int:
     story_key = ""
     state_file = ""
     project_root = get_project_root()
-    agent = os.environ.get("AI_AGENT", "").strip().lower() or "auto"
+    agent = _raw_agent_selection()
     idx = 1
     while idx < len(args):
         arg = args[idx]
@@ -462,6 +462,10 @@ def _flag_value(args: list[str], idx: int, flag: str) -> str:
 
 def _raw_agent_selection() -> str:
     value = os.environ.get("AI_AGENT", "").strip().lower()
+    if not value:
+        inferred = _infer_agent_from_command(os.environ.get("AI_COMMAND", ""))
+        if inferred:
+            return inferred
     return value if value in {"claude", "codex", "auto", "runtime"} else "auto"
 
 
@@ -470,3 +474,16 @@ def _resolve_agent_selection(agent: str, project_root: str) -> str:
     if value in {"", "auto", "runtime"}:
         return runtime_provider(project_root)
     return value
+def _infer_agent_from_command(command: str) -> str:
+    value = command.strip()
+    if not value:
+        return ""
+    try:
+        executable = Path(shlex.split(value)[0]).name.lower()
+    except ValueError:
+        return ""
+    if "codex" in executable:
+        return "codex"
+    if "claude" in executable:
+        return "claude"
+    return ""

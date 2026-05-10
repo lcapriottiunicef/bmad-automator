@@ -211,9 +211,15 @@ def parse_agent_config(raw: str) -> dict:
     complexity_overrides = data.get("complexityOverrides")
     if not isinstance(complexity_overrides, dict):
         complexity_overrides = {level: data[level] for level in ("low", "medium", "high") if isinstance(data.get(level), dict)}
+    if "defaultFallback" in data:
+        fallback_raw = data.get("defaultFallback")
+    elif "fallback" in data:
+        fallback_raw = data.get("fallback")
+    else:
+        fallback_raw = "codex"
     return {
         "defaultPrimary": data.get("defaultPrimary") or data.get("primary") or "auto",
-        "defaultFallback": data.get("defaultFallback") or data.get("fallback") or "false",
+        "defaultFallback": "false" if fallback_raw in {False, "false", "none", "null"} else (fallback_raw or "codex"),
         "perTask": per_task,
         "complexityOverrides": complexity_overrides,
     }

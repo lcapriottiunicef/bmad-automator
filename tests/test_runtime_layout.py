@@ -57,8 +57,15 @@ class RuntimeLayoutTests(unittest.TestCase):
         self.assertEqual(active_marker_project_entry(self.project_root), ".claude/.story-automator-active")
 
     def test_codex_provider_without_installed_skill_uses_agents_marker(self) -> None:
-        with patch.dict(os.environ, {"AI_AGENT": "codex"}, clear=False):
+        with patch.dict(os.environ, {"BMAD_RUNTIME_PROVIDER": "codex"}, clear=False):
             self.assertEqual(active_marker_path(self.project_root), self.project_root / ".agents" / ".story-automator-active")
+
+    def test_ai_agent_does_not_override_runtime_provider(self) -> None:
+        self._install_bundle(".claude")
+
+        with patch.dict(os.environ, {"AI_AGENT": "codex"}, clear=False):
+            self.assertEqual(runtime_provider(str(self.project_root)), "claude")
+            self.assertEqual(active_marker_path(self.project_root), self.project_root / ".claude" / ".story-automator-active")
 
     def test_current_skill_root_wins_when_multiple_runtime_roots_exist(self) -> None:
         self._install_bundle(".agents")
@@ -138,7 +145,7 @@ class RuntimeLayoutTests(unittest.TestCase):
             primary, fallback = resolve_agent_for_task(config, "medium", "dev")
 
             self.assertEqual(agent_type(), "codex")
-            self.assertEqual((primary, fallback), ("codex", "false"))
+            self.assertEqual((primary, fallback), ("codex", "codex"))
 
     def test_explicit_agent_values_are_normalized(self) -> None:
         config = parse_agent_config_json('{"defaultPrimary":" Codex ","defaultFallback":" Claude "}')

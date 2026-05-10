@@ -113,6 +113,22 @@ That wrapper:
 - sets `PYTHONPATH` to the bundled `src`
 - runs `python3 -m story_automator`
 
+## Runtime Provider Resolution
+
+Top-level runtime behavior is resolved separately from child-agent selection:
+
+- runtime provider decides hook/config syntax
+- child-agent selection decides whether spawned work uses Claude or Codex
+
+Provider resolution checks, in order:
+
+1. `BMAD_RUNTIME_PROVIDER`
+2. `STORY_AUTOMATOR_RUNTIME_PROVIDER`
+3. installed/current story-automator skill root
+4. project-local runtime layout fallback
+
+`AI_AGENT` is only for spawned child sessions. It does not decide whether `ensure-stop-hook` writes `.claude/settings.json` or `.codex/{config.toml,hooks.json}`.
+
 ## Repo Layout
 
 Repo layout:

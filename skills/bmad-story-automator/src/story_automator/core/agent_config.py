@@ -44,7 +44,14 @@ def parse_agent_config_json(raw: str) -> AgentConfigResolved:
     data = json.loads(raw)
     config = AgentConfigResolved()
     config.default_primary = data.get("defaultPrimary") or data.get("primary") or "auto"
-    config.default_fallback = data.get("defaultFallback") or data.get("fallback") or "false"
+    if "defaultFallback" in data:
+        fallback_raw = data.get("defaultFallback")
+    elif "fallback" in data:
+        fallback_raw = data.get("fallback")
+    else:
+        fallback_raw = "codex"
+    normalized_fallback = normalize_fallback_value(fallback_raw)
+    config.default_fallback = normalized_fallback or "codex"
     config.per_task = _parse_task_map(data.get("perTask"))
     retro_task = _parse_task_entry(data.get("retro"))
     if retro_task is not None:

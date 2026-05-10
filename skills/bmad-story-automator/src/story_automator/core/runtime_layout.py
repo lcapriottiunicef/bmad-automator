@@ -124,7 +124,7 @@ def runtime_provider(project_root: str | Path | None = None) -> str:
     # Provider controls hook/config syntax: Claude writes settings.json, Codex writes
     # hooks.json plus config.toml. Marker paths are resolved separately so they can
     # follow the installed skill root in mixed or migrated workspaces.
-    for name in ("BMAD_RUNTIME_PROVIDER", "STORY_AUTOMATOR_RUNTIME_PROVIDER", "AI_AGENT"):
+    for name in ("BMAD_RUNTIME_PROVIDER", "STORY_AUTOMATOR_RUNTIME_PROVIDER"):
         raw = os.environ.get(name, "").strip().lower()
         if raw in {"claude", "codex"}:
             return raw

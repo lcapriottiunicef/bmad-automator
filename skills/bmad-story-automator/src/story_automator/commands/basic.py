@@ -29,7 +29,7 @@ def _workflow_doc_relative(doc_name: str) -> str:
         return str(doc_path.resolve())
 
 
-def _stop_hook_command(command: str) -> str:
+def _stop_hook_command(command: str, project_root: Path) -> str:
     command_parts = shlex.split(command)
     if not command_parts:
         return command
@@ -41,8 +41,8 @@ def _stop_hook_command(command: str) -> str:
     for candidate in candidates:
         if candidate and candidate.exists() and os.access(candidate, os.X_OK):
             command_parts[0] = str(candidate)
-            return shlex.join(command_parts)
-    return shlex.join([shutil.which("python3") or "python3", "-m", "story_automator", *command_parts[1:]])
+            return shlex.join(["env", f"PROJECT_ROOT={project_root}", *command_parts])
+    return shlex.join(["env", f"PROJECT_ROOT={project_root}", shutil.which("python3") or "python3", "-m", "story_automator", *command_parts[1:]])
 
 
 def cmd_derive_project_slug(args: list[str]) -> int:
@@ -115,7 +115,7 @@ def cmd_ensure_stop_hook(args: list[str]) -> int:
     if provider == "claude" and not settings:
         write_json({"ok": False, "error": "missing_required_args"})
         return 1
-    command = _stop_hook_command(command)
+    command = _stop_hook_command(command, project_root)
     settings_path = Path(settings).expanduser().resolve() if settings else None
     try:
         result = ensure_stop_hook(
@@ -144,7 +144,7 @@ def cmd_stop_hook(_: list[str]) -> int:
     sys.stdin.read()
     if os.environ.get("STORY_AUTOMATOR_CHILD", "").lower() == "true":
         return 0
-    marker = active_marker_path(Path(os.getcwd()))
+    marker = active_marker_path()
     if not marker.exists():
         return 0
     try:

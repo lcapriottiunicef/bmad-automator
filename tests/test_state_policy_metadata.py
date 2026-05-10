@@ -8,6 +8,7 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
+from story_automator.commands.orchestrator_epic_agents import parse_agent_config
 from story_automator.commands.orchestrator import cmd_orchestrator_helper
 from story_automator.commands.state import cmd_build_state_doc, cmd_validate_state
 from story_automator.commands.tmux import _build_cmd, cmd_tmux_wrapper
@@ -323,10 +324,88 @@ class StatePolicyMetadataTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("review.md", stderr.getvalue())
 
-    def test_build_state_doc_coerces_null_default_fallback_to_false(self) -> None:
+    def test_build_cmd_supports_codex_retro_prompt(self) -> None:
+        stdout = io.StringIO()
+        with patch_env(self.project_root), redirect_stdout(stdout):
+            code = _build_cmd(["retro", "2", "--agent", "codex"])
+        self.assertEqual(code, 0)
+        rendered = stdout.getvalue()
+        self.assertIn('CODEX_HOME="/tmp/sa-codex-home-', rendered)
+        self.assertIn("codex exec -s workspace-write", rendered)
+        self.assertIn("Execute the BMAD retrospective workflow for epic 2.", rendered)
+
+    def test_build_cmd_uses_legacy_ai_command_consistently_for_claude(self) -> None:
+        stdout = io.StringIO()
+        with patch_env(self.project_root, extra={"AI_COMMAND": "claude --print"}), redirect_stdout(stdout):
+            code = _build_cmd(["review", "1.2"])
+        self.assertEqual(code, 0)
+        rendered = stdout.getvalue()
+        self.assertIn("unset CLAUDECODE && claude --print", rendered)
+
+    def test_retro_agent_uses_per_task_override_from_state(self) -> None:
+        state_file = self.project_root / "retro-state.md"
+        state_file.write_text(
+            "---\nagentConfig:\n  defaultPrimary: \"claude\"\n  defaultFallback: \"codex\"\n  perTask:\n    retro:\n      primary: \"codex\"\n      fallback: false\n---\n",
+            encoding="utf-8",
+        )
+        stdout = io.StringIO()
+        with patch_env(self.project_root), redirect_stdout(stdout):
+            code = cmd_orchestrator_helper(["retro-agent", "--state-file", str(state_file)])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["primary"], "codex")
+        self.assertEqual(payload["fallback"], "false")
+
+    def test_parse_agent_config_ignores_null_per_task(self) -> None:
+        config = parse_agent_config(
+            json.dumps(
+                {
+                    "defaultPrimary": "codex",
+                    "defaultFallback": "claude",
+                    "perTask": None,
+                    "retro": {"primary": "claude", "fallback": False},
+                }
+            )
+        )
+
+        self.assertEqual(config["perTask"]["retro"]["primary"], "claude")
+        self.assertEqual(config["perTask"]["retro"]["fallback"], False)
+
+    def test_parse_agent_config_preserves_legacy_codex_fallback_when_missing(self) -> None:
+        config = parse_agent_config(json.dumps({}))
+
+        self.assertEqual(config["defaultFallback"], "codex")
+
+    def test_parse_agent_config_preserves_legacy_codex_fallback_for_claude_primary(self) -> None:
+        config = parse_agent_config(json.dumps({"defaultPrimary": "claude"}))
+
+        self.assertEqual(config["defaultFallback"], "codex")
+
+    def test_parse_agent_config_keeps_explicit_disabled_fallback(self) -> None:
+        config = parse_agent_config(json.dumps({"defaultPrimary": "claude", "defaultFallback": False}))
+
+        self.assertEqual(config["defaultFallback"], "false")
+
+    def test_retro_agent_inherits_default_primary_when_unset(self) -> None:
+        state_file = self.project_root / "retro-default-state.md"
+        state_file.write_text(
+            "---\nagentConfig:\n  defaultPrimary: \"codex\"\n  defaultFallback: \"claude\"\n---\n",
+            encoding="utf-8",
+        )
+        stdout = io.StringIO()
+        with patch_env(self.project_root), redirect_stdout(stdout):
+            code = cmd_orchestrator_helper(["retro-agent", "--state-file", str(state_file)])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["primary"], "codex")
+        self.assertEqual(payload["fallback"], "claude")
+
+    def test_build_state_doc_coerces_null_default_fallback_to_codex(self) -> None:
         state_file = self._build_state({"agentConfig": {"defaultPrimary": "codex", "defaultFallback": None}})
 
-        self.assertIn("defaultFallback: false", state_file.read_text(encoding="utf-8"))
+        self.assertIn('defaultFallback: "codex"', state_file.read_text(encoding="utf-8"))
 
     def test_build_state_doc_coerces_null_default_primary_to_auto(self) -> None:
         state_file = self._build_state({"agentConfig": {"defaultPrimary": None, "defaultFallback": False}})
@@ -448,23 +527,28 @@ class StatePolicyMetadataTests(unittest.TestCase):
 
 
 class patch_env:
-    def __init__(self, project_root: Path) -> None:
+    def __init__(self, project_root: Path, extra: dict[str, str] | None = None) -> None:
         self.project_root = str(project_root)
-        self.previous = None
+        self.extra = extra or {}
+        self.previous: dict[str, str | None] = {}
 
     def __enter__(self) -> None:
         import os
 
-        self.previous = os.environ.get("PROJECT_ROOT")
+        self.previous["PROJECT_ROOT"] = os.environ.get("PROJECT_ROOT")
         os.environ["PROJECT_ROOT"] = self.project_root
+        for key, value in self.extra.items():
+            self.previous[key] = os.environ.get(key)
+            os.environ[key] = value
 
     def __exit__(self, exc_type, exc, tb) -> None:
         import os
 
-        if self.previous is None:
-            os.environ.pop("PROJECT_ROOT", None)
-        else:
-            os.environ["PROJECT_ROOT"] = self.previous
+        for key, value in self.previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
 
 if __name__ == "__main__":
