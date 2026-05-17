@@ -6,7 +6,7 @@ This doc explains how Story Automator chooses child agents, builds child-session
 
 There are two distinct agent layers:
 
-- the orchestrator itself, which runs as a Claude skill
+- the orchestrator itself, which runs from a supported top-level agent session
 - child sessions, which can run Claude or Codex depending on the agent plan
 
 Agent selection is driven by:
@@ -14,7 +14,7 @@ Agent selection is driven by:
 - default primary and fallback values
 - per-task overrides
 - complexity-based overrides
-- retro-specific rule: retrospective is always Claude
+- retro-specific rule: retrospective uses the configured retro agent
 
 ## Agent Resolution
 
@@ -25,7 +25,7 @@ flowchart TD
     C --> D["Resolve agent for story + task"]
     D --> E{"Task type"}
     E -->|create/dev/auto/review| F["Claude or Codex"]
-    E -->|retro| G["Claude only"]
+    E -->|retro| G["Configured retro agent"]
 ```
 
 The generated agents file is a runtime artifact, not just display text.

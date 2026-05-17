@@ -27,15 +27,15 @@ flowchart TD
 
 ## Stop Hook Blocks A Normal Session
 
-If a normal top-level Claude session complains that Story Automator is active:
+If a normal top-level session complains that Story Automator is active:
 
-- check `.claude/.story-automator-active`
+- check the active runtime marker path
 - confirm whether orchestration is really still running
 - if the run finished but cleanup did not happen, remove or reconcile the marker carefully
 
 ```mermaid
 flowchart TD
-    A["Stop hook blocks session"] --> B["Check .claude/.story-automator-active"]
+    A["Stop hook blocks session"] --> B["Check the active runtime marker file"]
     B --> C{"Run still active?"}
     C -->|Yes| D["Resume or let it finish"]
     C -->|No| E["Check state doc and tmux sessions"]
@@ -103,10 +103,30 @@ If a long command path fails:
 
 ## Useful Checks
 
+Resolve the installed helper first:
+
 ```bash
-.claude/skills/bmad-story-automator/scripts/story-automator tmux-wrapper list --project-only
-.claude/skills/bmad-story-automator/scripts/story-automator orchestrator-helper state-list _bmad-output/story-automator
-.claude/skills/bmad-story-automator/scripts/story-automator orchestrator-helper verify-code-review 1.2
+scripts=""
+for root in .agents/skills .claude/skills .codex/skills; do
+  candidate="$root/bmad-story-automator/scripts/story-automator"
+  if [ -x "$candidate" ]; then
+    scripts="$candidate"
+    break
+  fi
+done
+[ -n "$scripts" ] || { echo "story-automator not found in supported skill roots" >&2; exit 1; }
+```
+
+```bash
+"$scripts" tmux-wrapper list --project-only
+```
+
+```bash
+"$scripts" orchestrator-helper state-list _bmad-output/story-automator
+```
+
+```bash
+"$scripts" orchestrator-helper verify-code-review 1.2
 ```
 
 ## Read Next

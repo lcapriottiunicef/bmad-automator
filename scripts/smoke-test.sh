@@ -82,56 +82,63 @@ assert_string_not_contains() {
 make_skill() {
   local root="$1"
   local name="$2"
-  mkdir -p "$root/.claude/skills/$name"
-  printf -- '---\nname: %s\n---\n\nFollow ./workflow.md.\n' "$name" >"$root/.claude/skills/$name/SKILL.md"
-  printf '# %s\n' "$name" >"$root/.claude/skills/$name/workflow.md"
+  local skills_root="${3:-.claude/skills}"
+  mkdir -p "$root/$skills_root/$name"
+  printf -- '---\nname: %s\n---\n\nFollow ./workflow.md.\n' "$name" >"$root/$skills_root/$name/SKILL.md"
+  printf '# %s\n' "$name" >"$root/$skills_root/$name/workflow.md"
 }
 
 make_workflow_only_skill() {
   local root="$1"
   local name="$2"
-  mkdir -p "$root/.claude/skills/$name"
-  printf '# %s\n' "$name" >"$root/.claude/skills/$name/workflow.md"
+  local skills_root="${3:-.claude/skills}"
+  mkdir -p "$root/$skills_root/$name"
+  printf '# %s\n' "$name" >"$root/$skills_root/$name/workflow.md"
 }
 
 make_skill_only_skill() {
   local root="$1"
   local name="$2"
-  mkdir -p "$root/.claude/skills/$name"
-  printf -- '---\nname: %s\n---\n\nFollow ./workflow.md.\n' "$name" >"$root/.claude/skills/$name/SKILL.md"
+  local skills_root="${3:-.claude/skills}"
+  mkdir -p "$root/$skills_root/$name"
+  printf -- '---\nname: %s\n---\n\nFollow ./workflow.md.\n' "$name" >"$root/$skills_root/$name/SKILL.md"
 }
 
 make_required_skills() {
   local root="$1"
-  make_skill "$root" bmad-create-story
-  printf '# discover\n' >"$root/.claude/skills/bmad-create-story/discover-inputs.md"
-  printf '# template\n' >"$root/.claude/skills/bmad-create-story/template.md"
-  printf '# checklist\n' >"$root/.claude/skills/bmad-create-story/checklist.md"
+  local skills_root="${2:-.claude/skills}"
+  make_skill "$root" bmad-create-story "$skills_root"
+  printf '# discover\n' >"$root/$skills_root/bmad-create-story/discover-inputs.md"
+  printf '# template\n' >"$root/$skills_root/bmad-create-story/template.md"
+  printf '# checklist\n' >"$root/$skills_root/bmad-create-story/checklist.md"
 
-  make_skill "$root" bmad-dev-story
-  printf '# checklist\n' >"$root/.claude/skills/bmad-dev-story/checklist.md"
+  make_skill "$root" bmad-dev-story "$skills_root"
+  printf '# checklist\n' >"$root/$skills_root/bmad-dev-story/checklist.md"
 
-  make_skill "$root" bmad-retrospective
+  make_skill "$root" bmad-retrospective "$skills_root"
 }
 
 make_required_workflow_only_skills() {
   local root="$1"
-  make_workflow_only_skill "$root" bmad-create-story
-  make_workflow_only_skill "$root" bmad-dev-story
-  make_workflow_only_skill "$root" bmad-retrospective
+  local skills_root="${2:-.claude/skills}"
+  make_workflow_only_skill "$root" bmad-create-story "$skills_root"
+  make_workflow_only_skill "$root" bmad-dev-story "$skills_root"
+  make_workflow_only_skill "$root" bmad-retrospective "$skills_root"
 }
 
 make_required_skill_only_skills() {
   local root="$1"
-  make_skill_only_skill "$root" bmad-create-story
-  make_skill_only_skill "$root" bmad-dev-story
-  make_skill_only_skill "$root" bmad-retrospective
+  local skills_root="${2:-.claude/skills}"
+  make_skill_only_skill "$root" bmad-create-story "$skills_root"
+  make_skill_only_skill "$root" bmad-dev-story "$skills_root"
+  make_skill_only_skill "$root" bmad-retrospective "$skills_root"
 }
 
 make_qa_skill() {
   local root="$1"
-  make_skill "$root" bmad-qa-generate-e2e-tests
-  printf '# checklist\n' >"$root/.claude/skills/bmad-qa-generate-e2e-tests/checklist.md"
+  local skills_root="${2:-.claude/skills}"
+  make_skill "$root" bmad-qa-generate-e2e-tests "$skills_root"
+  printf '# checklist\n' >"$root/$skills_root/bmad-qa-generate-e2e-tests/checklist.md"
 }
 
 make_legacy_story_automator_dirs() {
@@ -174,32 +181,39 @@ make_fixture() {
   local legacy="$3"
   local deps_mode="${4:-full}"
   local story_wrapper_mode="${5:-legacy}"
+  local skills_root="${6:-.claude/skills}"
 
-  mkdir -p "$root/_bmad" "$root/.claude/commands"
+  mkdir -p "$root/_bmad"
+  if [ "$story_wrapper_mode" != "none" ]; then
+    mkdir -p "$root/.claude/commands"
+  fi
   case "$deps_mode" in
-    workflow-only) make_required_workflow_only_skills "$root" ;;
-    skill-only) make_required_skill_only_skills "$root" ;;
-    *) make_required_skills "$root" ;;
+    workflow-only) make_required_workflow_only_skills "$root" "$skills_root" ;;
+    skill-only) make_required_skill_only_skills "$root" "$skills_root" ;;
+    *) make_required_skills "$root" "$skills_root" ;;
   esac
 
   case "$qa" in
-    yes|full) make_qa_skill "$root" ;;
-    workflow-only) make_workflow_only_skill "$root" bmad-qa-generate-e2e-tests ;;
-    skill-only) make_skill_only_skill "$root" bmad-qa-generate-e2e-tests ;;
+    yes|full) make_qa_skill "$root" "$skills_root" ;;
+    workflow-only) make_workflow_only_skill "$root" bmad-qa-generate-e2e-tests "$skills_root" ;;
+    skill-only) make_skill_only_skill "$root" bmad-qa-generate-e2e-tests "$skills_root" ;;
   esac
 
   if [ "$legacy" = "yes" ]; then
     make_legacy_story_automator_dirs "$root"
   fi
 
-  seed_command_shims "$root" "$story_wrapper_mode"
+  if [ "$story_wrapper_mode" != "none" ]; then
+    seed_command_shims "$root" "$story_wrapper_mode"
+  fi
 }
 
 verify_common_install() {
   local root="$1"
   local story_wrapper_expectation="${2:-removed}"
-  local story_dir="$root/.claude/skills/bmad-story-automator"
-  local review_dir="$root/.claude/skills/bmad-story-automator-review"
+  local skills_root="${3:-.claude/skills}"
+  local story_dir="$root/$skills_root/bmad-story-automator"
+  local review_dir="$root/$skills_root/bmad-story-automator-review"
 
   assert_dir "$story_dir"
   assert_dir "$review_dir"
@@ -238,7 +252,7 @@ verify_common_install() {
   else
     assert_not_exists "$root/.claude/commands/bmad-bmm-story-automator.md"
   fi
-  assert_contains "outside .claude/skills/" "$review_dir/instructions.xml"
+  assert_contains "outside supported skill roots" "$review_dir/instructions.xml"
   assert_contains 'installed helper at `scripts/story-automator`' "$story_dir/data/scripts-reference.md"
   assert_not_contains "bin/" "$story_dir/data/monitoring-pattern.md"
   assert_contains 'state-file "$state_file"' "$story_dir/data/code-review-loop.md"
@@ -261,7 +275,8 @@ verify_common_install() {
 
 verify_qa_prompts() {
   local root="$1"
-  local story_dir="$root/.claude/skills/bmad-story-automator"
+  local skills_root="${2:-.claude/skills}"
+  local story_dir="$root/$skills_root/bmad-story-automator"
   local auto_claude auto_codex review_claude retro_claude
 
   auto_claude="$(cd "$root" && "$story_dir/scripts/story-automator" tmux-wrapper build-cmd auto 5.3 --agent claude)"
@@ -270,16 +285,16 @@ verify_qa_prompts() {
   retro_claude="$(cd "$root" && "$story_dir/scripts/story-automator" tmux-wrapper build-cmd retro 5 --agent claude)"
 
   assert_string_contains "claude --dangerously-skip-permissions" "$auto_claude"
-  assert_string_contains "READ this skill first: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
-  assert_string_contains "READ this workflow file next: .claude/skills/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
+  assert_string_contains "READ this skill first: $skills_root/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
+  assert_string_contains "READ this workflow file next: $skills_root/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
   assert_string_contains "CODEX_HOME=\"/tmp/sa-codex-home-" "$auto_codex"
   assert_string_contains "codex exec -s workspace-write" "$auto_codex"
   assert_string_contains "approval_policy=\"never\"" "$auto_codex"
   assert_string_contains "--disable plugins --disable sqlite --disable shell_snapshot" "$auto_codex"
-  assert_string_contains "READ this skill first: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_codex"
-  assert_string_contains "READ this skill first: .claude/skills/bmad-story-automator-review/SKILL.md" "$review_claude"
+  assert_string_contains "READ this skill first: $skills_root/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_codex"
+  assert_string_contains "READ this skill first: $skills_root/bmad-story-automator-review/SKILL.md" "$review_claude"
   assert_string_contains "auto-fix all issues without prompting" "$review_claude"
-  assert_string_contains "READ this skill first: .claude/skills/bmad-retrospective/SKILL.md" "$retro_claude"
+  assert_string_contains "READ this skill first: $skills_root/bmad-retrospective/SKILL.md" "$retro_claude"
   assert_string_contains "Assume the user will NOT provide any input to the retrospective directly." "$retro_claude"
   assert_string_contains "Update docs that have verified discrepancies" "$retro_claude"
 
@@ -291,23 +306,26 @@ verify_qa_prompts() {
 
 verify_qa_prompts_absent() {
   local root="$1"
-  local story_dir="$root/.claude/skills/bmad-story-automator"
+  local skills_root="${2:-.claude/skills}"
+  local story_dir="$root/$skills_root/bmad-story-automator"
   local auto_claude
 
   auto_claude="$(cd "$root" && "$story_dir/scripts/story-automator" tmux-wrapper build-cmd auto 5.3 --agent claude)"
-  assert_string_not_contains "READ this skill first: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
-  assert_string_not_contains "READ this workflow file next: .claude/skills/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
-  assert_string_not_contains "Validate with: .claude/skills/bmad-qa-generate-e2e-tests/checklist.md" "$auto_claude"
+  assert_string_not_contains "READ this skill first: $skills_root/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
+  assert_string_not_contains "READ this workflow file next: $skills_root/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
+  assert_string_not_contains "Validate with: $skills_root/bmad-qa-generate-e2e-tests/checklist.md" "$auto_claude"
 }
 
 verify_qa_prompts_skill_only() {
   local root="$1"
-  local story_dir="$root/.claude/skills/bmad-story-automator"
+  local skills_root="${2:-.claude/skills}"
+  local story_dir="$root/$skills_root/bmad-story-automator"
   local auto_claude
 
   auto_claude="$(cd "$root" && "$story_dir/scripts/story-automator" tmux-wrapper build-cmd auto 5.3 --agent claude)"
-  assert_string_contains "READ this skill first: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
-  assert_string_not_contains "READ this workflow file next: .claude/skills/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
+  assert_string_contains "READ this skill first: $skills_root/bmad-qa-generate-e2e-tests/SKILL.md" "$auto_claude"
+  assert_string_not_contains "READ this workflow file next: $skills_root/bmad-qa-generate-e2e-tests/workflow.md" "$auto_claude"
+  assert_string_not_contains "Validate with: $skills_root/bmad-qa-generate-e2e-tests/checklist.md" "$auto_claude"
 }
 
 verify_legacy_backups() {
@@ -345,18 +363,19 @@ run_case() {
   local legacy="$3"
   local deps_mode="${4:-full}"
   local story_wrapper_mode="${5:-legacy}"
+  local skills_root="${6:-.claude/skills}"
   local root="$TMP_DIR/$name"
 
-  make_fixture "$root" "$qa" "$legacy" "$deps_mode" "$story_wrapper_mode"
+  make_fixture "$root" "$qa" "$legacy" "$deps_mode" "$story_wrapper_mode" "$skills_root"
   npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >/dev/null
   if [ "$story_wrapper_mode" = "repointed" ]; then
-    verify_common_install "$root" preserved
+    verify_common_install "$root" preserved "$skills_root"
   else
-    verify_common_install "$root"
+    verify_common_install "$root" removed "$skills_root"
   fi
 
   if [ "$qa" = "yes" ] || [ "$qa" = "full" ]; then
-    verify_qa_prompts "$root"
+    verify_qa_prompts "$root" "$skills_root"
   fi
 
   if [ "$legacy" = "yes" ]; then
@@ -368,10 +387,11 @@ run_failure_case() {
   local name="$1"
   local deps_mode="$2"
   local expected_error="$3"
+  local skills_root="${4:-.claude/skills}"
   local root="$TMP_DIR/$name"
   local install_log="$root/install.log"
 
-  make_fixture "$root" no no "$deps_mode" legacy
+  make_fixture "$root" no no "$deps_mode" legacy "$skills_root"
   if npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1; then
     echo "Expected install failure for dependency fixture: $name" >&2
     exit 1
@@ -382,20 +402,67 @@ run_failure_case() {
 run_optional_qa_partial_case() {
   local name="$1"
   local qa_mode="$2"
+  local skills_root="${3:-.claude/skills}"
   local root="$TMP_DIR/$name"
   local install_log="$root/install.log"
 
-  make_fixture "$root" "$qa_mode" no full legacy
+  make_fixture "$root" "$qa_mode" no full legacy "$skills_root"
   npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1
-  verify_common_install "$root"
+  verify_common_install "$root" removed "$skills_root"
   if [ "$qa_mode" = "workflow-only" ]; then
-    verify_qa_prompts_absent "$root"
-    assert_contains "Optional skill incomplete: missing .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md." "$install_log"
+    verify_qa_prompts_absent "$root" "$skills_root"
+    assert_contains "Optional skill incomplete: missing $skills_root/bmad-qa-generate-e2e-tests/SKILL.md." "$install_log"
     assert_not_contains "qa-generate-e2e-tests:" "$install_log"
   else
-    verify_qa_prompts_skill_only "$root"
-    assert_contains "qa-generate-e2e-tests: .claude/skills/bmad-qa-generate-e2e-tests/SKILL.md" "$install_log"
+    verify_qa_prompts_skill_only "$root" "$skills_root"
+    assert_contains "qa-generate-e2e-tests: $skills_root/bmad-qa-generate-e2e-tests/SKILL.md" "$install_log"
   fi
+}
+
+run_complete_roots_install_together_case() {
+  local root="$TMP_DIR/complete-roots-install-together"
+  local install_log="$root/install.log"
+
+  mkdir -p "$root/_bmad"
+  make_required_skills "$root" .claude/skills
+  make_required_skills "$root" .agents/skills
+
+  npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1
+  verify_common_install "$root" removed .claude/skills
+  verify_common_install "$root" removed .agents/skills
+  assert_contains "Installed skill root: .claude/skills" "$install_log"
+  assert_contains "Installed skill root: .agents/skills" "$install_log"
+}
+
+run_complete_roots_ignore_partial_case() {
+  local root="$TMP_DIR/complete-roots-ignore-partial"
+  local install_log="$root/install.log"
+
+  mkdir -p "$root/_bmad"
+  make_required_workflow_only_skills "$root" .claude/skills
+  make_required_skills "$root" .agents/skills
+  make_required_skills "$root" .codex/skills
+
+  npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1
+  verify_common_install "$root" removed .agents/skills
+  verify_common_install "$root" removed .codex/skills
+  assert_not_exists "$root/.claude/skills/bmad-story-automator"
+  assert_contains "Installed skill root: .agents/skills" "$install_log"
+  assert_contains "Installed skill root: .codex/skills" "$install_log"
+  assert_not_contains "Installed skill root: .claude/skills" "$install_log"
+}
+
+run_codex_runtime_missing_deps_case() {
+  local root="$TMP_DIR/codex-runtime-missing-deps"
+  local install_log="$root/install.log"
+
+  mkdir -p "$root/_bmad" "$root/.codex"
+  if npx --yes --package "file:$PACK_TARBALL" bmad-story-automator "$root" >"$install_log" 2>&1; then
+    echo "Expected install failure for Codex runtime without dependency skills" >&2
+    exit 1
+  fi
+  assert_contains "Required dependency skills not found under any supported skill root (.agents/skills, .claude/skills, .codex/skills)." "$install_log"
+  assert_not_exists "$root/.claude"
 }
 
 pack_fixture_tarball
@@ -404,8 +471,19 @@ run_case pure-without-qa no no
 run_case pure-migrates-legacy yes yes
 run_case repointed-wrapper-survives yes no full repointed
 run_case skill-only-deps no no skill-only
+run_case codex-agents-with-qa yes no full none .agents/skills
+run_case codex-agents-without-qa no no full none .agents/skills
+run_case codex-agents-skill-only-deps no no skill-only none .agents/skills
+run_case codex-codex-root-without-qa no no full none .codex/skills
+run_case codex-codex-root-skill-only-deps no no skill-only none .codex/skills
+run_complete_roots_install_together_case
+run_complete_roots_ignore_partial_case
+run_codex_runtime_missing_deps_case
 run_failure_case workflow-only-deps workflow-only "Required skill file missing: .claude/skills/bmad-create-story/SKILL.md"
+run_failure_case codex-workflow-only-deps workflow-only "Required skill file missing: .agents/skills/bmad-create-story/SKILL.md" .agents/skills
 run_optional_qa_partial_case partial-qa-workflow-only workflow-only
 run_optional_qa_partial_case partial-qa-skill-only skill-only
+run_optional_qa_partial_case codex-partial-qa-workflow-only workflow-only .agents/skills
+run_optional_qa_partial_case codex-partial-qa-skill-only skill-only .agents/skills
 
 echo "smoke ok"

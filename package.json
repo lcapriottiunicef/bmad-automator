@@ -1,6 +1,6 @@
 {
   "name": "bmad-story-automator",
-  "version": "1.14.2",
+  "version": "1.15.0-next.1",
   "description": "Install the BMAD story-automator self-contained skills into a BMAD project.",
   "license": "MIT",
   "bin": {
@@ -11,6 +11,7 @@
     "docs/",
     "install.sh",
     "skills/",
+    "!skills/bmad-story-automator/dist/",
     "!skills/**/__pycache__/",
     "!skills/**/*.pyc",
     "!skills/**/*.pyo",

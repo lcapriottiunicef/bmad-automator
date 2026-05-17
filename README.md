@@ -63,7 +63,7 @@ Or install from anywhere:
 npx bmad-story-automator /absolute/path/to/your-bmad-project
 ```
 
-Then run the installed skill from Claude:
+Then run the installed skill from your supported entrypoint session:
 
 ```text
 Use the bmad-story-automator skill.
@@ -76,11 +76,43 @@ cp -a skills/bmad-story-automator /absolute/path/to/project/.claude/skills/
 cp -a skills/bmad-story-automator-review /absolute/path/to/project/.claude/skills/
 ```
 
+## BMAD Method Install Channels
+
+If you install Automator through the BMAD Method official module code `baut`, choose the channel explicitly.
+Run these from the target BMAD project root, or add `--directory /absolute/path/to/your-bmad-project`.
+
+Stable install, using the latest pure-semver tag:
+
+```bash
+npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+```
+
+Stable pin or rollback to the current stable tag for this preview cycle:
+
+```bash
+npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+```
+
+Codex preview. Do not run this until the remote preview tag is published:
+
+```bash
+npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes
+```
+
+Branch preview. Do not run this until the remote preview branch is published:
+
+```bash
+npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes
+```
+
+Current caveat: the official registry sets `baut` to `default_channel: next`, so unqualified `--modules baut` and `--next baut` resolve to `main` HEAD. They are not stable installs and, before the preview work merges to `main`, they are not the pre-merge Codex preview. Treat the preview pin and branch commands as post-publication commands only.
+
 ## Expectations
 
 - This is an orchestrator, not a correctness guarantee. Bad planning artifacts still produce bad implementation runs.
-- The orchestrator itself is a Claude skill. Child sessions can use Claude or Codex depending on agent configuration.
-- Retrospectives are Claude-only.
+- The npm installer writes the skill into every supported dependency skill root that is complete: `.agents/skills`, `.claude/skills`, and/or `.codex/skills`.
+- Child sessions can use Claude or Codex depending on agent configuration.
+- Retrospectives inherit the configured primary agent by default, and can be overridden explicitly via `agentConfig`.
 - The automator expects sprint planning to be complete before it starts.
 - Review completion is gated by verification, not by child-session exit alone.
 - If the optional QA automate skill is missing, install still succeeds, but runs should use `Skip Automate = true`.
@@ -108,7 +140,7 @@ The core runtime model is:
 
 ```mermaid
 flowchart TD
-    A["Install into BMAD project<br/>npx bmad-story-automator"] --> B["Run bmad-story-automator skill in Claude"]
+    A["Install into BMAD project<br/>npx bmad-story-automator"] --> B["Run bmad-story-automator skill from a supported entrypoint"]
     B --> C["Load BMAD config and determine mode"]
     C --> D{"Mode"}
     D -->|Create| E["Init -> Preflight -> Configure -> Finalize"]
@@ -163,30 +195,37 @@ Host requirements:
 
 - `python3` 3.11+
 - `tmux`
-- Claude Code
-- macOS or Linux
+- Claude Code or Codex runtime access
+- macOS, Linux, or Windows via WSL
 
 Target project requirements:
 
 - `_bmad/` project directory
-- `.claude/skills/bmad-create-story/SKILL.md`
-- `.claude/skills/bmad-dev-story/SKILL.md`
-- `.claude/skills/bmad-retrospective/SKILL.md`
-- optional `.claude/skills/bmad-qa-generate-e2e-tests/SKILL.md`
+- BMAD dependency skill entrypoints under at least one supported skill root (`.agents/skills`, `.claude/skills`, and/or `.codex/skills`):
+  - `bmad-create-story`
+  - `bmad-dev-story`
+  - `bmad-retrospective`
+  - optional `bmad-qa-generate-e2e-tests`
+
+Claude-only, Codex-only, and mixed projects are all supported. The installer updates each supported root that already contains the required dependency `SKILL.md` files.
 
 Dependency skill internals such as `workflow.md` are optional. If the QA skill is missing, install still succeeds. Run Story Automator with `Skip Automate = true` unless the QA skill is installed.
 
 ## Install Verification
 
-Inside a target project:
+Inside a target project, verify the installed package layout:
 
 ```bash
 cd /path/to/project
-test -f .claude/skills/bmad-story-automator/SKILL.md
-test -f .claude/skills/bmad-story-automator-review/SKILL.md
-.claude/skills/bmad-story-automator/scripts/story-automator --help
-grep -n "name: bmad-story-automator" .claude/skills/bmad-story-automator/SKILL.md
-grep -n "0 CRITICAL issues remain after fixes" .claude/skills/bmad-story-automator-review/instructions.xml
+found=0
+for skills_root in .agents/skills .claude/skills .codex/skills; do
+  if test -f "$skills_root/bmad-story-automator/SKILL.md"; then
+    found=1
+    test -f "$skills_root/bmad-story-automator-review/SKILL.md"
+    test -x "$skills_root/bmad-story-automator/scripts/story-automator"
+  fi
+done
+test "$found" -eq 1
 ```
 
 Expected:
@@ -194,6 +233,7 @@ Expected:
 - helper CLI prints usage
 - the main skill exists
 - the bundled review gate exists
+- the skill is installed under each complete supported dependency skill root
 
 ## Development Verification
 

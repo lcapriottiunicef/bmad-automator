@@ -8,11 +8,9 @@
   "plugins": [
     {
       "name": "bmad-automator",
-      "source": {
-        "source": "github",
-        "repo": "bmad-code-org/bmad-automator"
-      },
+      "source": "./",
       "description": "BMAD story automation skills for create/dev/QA/review/retro orchestration.",
+      "version": "1.15.0-next.1",
       "author": {
         "name": "bma-d",
         "email": "support@bmadcode.com"
@@ -32,6 +30,10 @@
         "bmad",
         "automation",
         "story-workflow"
+      ],
+      "skills": [
+        "./skills/bmad-story-automator",
+        "./skills/bmad-story-automator-review"
       ]
     }
   ]

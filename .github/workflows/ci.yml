@@ -34,16 +34,16 @@ jobs:
         run: npm run pack:dry-run
 
       - name: Build wheel
-        run: python -m build source
+        run: python -m build skills/bmad-story-automator
 
       - name: Install Python package
-        run: python -m pip install ./source
+        run: python -m pip install ./skills/bmad-story-automator
 
       - name: Python CLI help
-        run: PYTHONPATH=source/src python -m story_automator --help
+        run: PYTHONPATH=skills/bmad-story-automator/src python -m story_automator --help
 
       - name: Wrapper CLI help
-        run: source/scripts/story-automator --help
+        run: skills/bmad-story-automator/scripts/story-automator --help
 
       - name: Installer smoke
         run: npm run test:smoke

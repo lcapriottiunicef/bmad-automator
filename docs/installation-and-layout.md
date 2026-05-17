@@ -2,6 +2,58 @@
 
 This doc explains what `npx bmad-story-automator` installs, what it requires, and how it handles migration from older installs.
 
+## BMAD Method Channels
+
+Automator is also available through the BMAD Method official module code `baut`. Because the official registry currently sets `baut` to `default_channel: next`, channel selection must be explicit:
+
+- `--modules baut --all-stable` resolves to the latest pure-semver stable tag.
+- `--pin baut=v1.14.2` resolves to the current stable tag for this preview cycle and is the safest rollback path.
+- `--pin baut=v1.15.0-next.1` resolves to the reproducible Codex preview after the remote tag is published.
+- `--custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support` resolves to the branch preview after the remote branch is published.
+- Unqualified `--modules baut` and `--next baut` resolve to `main` HEAD while `default_channel: next` remains. They are not stable installs and are not the pre-merge PR preview.
+
+Run these commands from the target BMAD project root, or add `--directory /absolute/path/to/your-bmad-project`.
+
+Stable install:
+
+```bash
+npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+```
+
+Stable pin:
+
+```bash
+npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+```
+
+Codex preview install. Do not run this until `v1.15.0-next.1` is pushed to the remote:
+
+```bash
+npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes
+```
+
+Branch preview install. Do not run this until `next/codex-runtime-support` is pushed to the remote:
+
+```bash
+npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes
+```
+
+Rollback from preview or branch testing:
+
+```bash
+npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+```
+
+or:
+
+```bash
+npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+```
+
+The preview tag and preview branch are local-only until remote publication happens. Do not give testers the preview pin or custom-source branch commands as working remote commands before that publication. If custom-source discovery asks which plugin to install after reading the branch, choose `bmad-automator`.
+
+The BMAD Method commands above install through `bmad-method` for the requested `--tools` target. The sections below describe the standalone `npx bmad-story-automator` installer and its multi-root copying behavior.
+
 ## Installer Flow
 
 ```mermaid
@@ -11,25 +63,44 @@ flowchart TD
     C --> D["Verify required sibling skills exist in target project"]
     D --> E["Resolve optional QA skill if present"]
     E --> F["Backup current installs and legacy story-automator paths"]
-    F --> G["Copy skills into .claude/skills"]
+    F --> G["Copy skills into each qualifying skill root"]
     G --> H["Remove obsolete legacy command shims"]
     H --> I["Print installed paths and verified sibling entrypoints"]
 ```
 
 ## Target Paths
 
-The installer writes into the target project:
+The npm installer writes into every qualifying skill root.
 
-- `.claude/skills/bmad-story-automator`
-- `.claude/skills/bmad-story-automator-review`
+Terminology:
+
+- Supported roots are `.agents/skills`, `.claude/skills`, and `.codex/skills`.
+- Qualifying roots are supported roots that contain the required dependency skill entrypoints (`SKILL.md`).
+- Installed skill roots are the qualifying roots where `bmad-story-automator` and `bmad-story-automator-review` are copied.
+
+Supported roots:
+
+- `.agents/skills`
+- `.claude/skills`
+- `.codex/skills`
 
 Unlike the older workflow-root layout, this Python port installs into the pure skill tree.
+Use `.agents/skills` when you want a shared skill tree that multiple runtimes can see. Use `.claude/skills` or `.codex/skills` when provider-specific isolation is useful. Runtime provider/layout is still resolved separately from install targets: explicit provider env wins first, then active skill-root context, then project-layout fallback. In that fallback, active `.agents` or `.codex` roots map to Codex-style hook/config layout, while `.claude` maps to Claude-style layout.
+
+Installer behavior and runtime behavior are different:
+
+- The installer has no precedence among qualifying roots; it updates every qualifying root it finds.
+- Runtime resolution does have an order for active execution context: explicit `BMAD_SKILLS_ROOT`, current installed helper root, project `.agents`, project `.claude`, project `.codex`, then home roots.
+
+Claude-only, Codex-only, and mixed projects are supported. If more than one root contains all required dependency `SKILL.md` files, the installer updates each qualifying root. If a root is present but missing required skill entrypoints while another root qualifies, the incomplete root is left unchanged.
+
+The repo-local source skills live under `skills/`. The installer copies those same directly usable skill folders into each qualifying root.
 
 ## Installed Tree
 
 ```mermaid
 flowchart TD
-    A[".claude/skills/"] --> B["bmad-story-automator/"]
+    A["<installed-skill-root>/"] --> B["bmad-story-automator/"]
     A --> C["bmad-story-automator-review/"]
     B --> D["SKILL.md"]
     B --> E["workflow.md"]
@@ -43,17 +114,19 @@ flowchart TD
 
 ## Required Inputs
 
-The target project must already contain these BMAD skills:
+The target project must already contain these BMAD skills under at least one supported skill root:
 
-- `.claude/skills/bmad-create-story/SKILL.md`
-- `.claude/skills/bmad-dev-story/SKILL.md`
-- `.claude/skills/bmad-retrospective/SKILL.md`
+- `bmad-create-story`
+- `bmad-dev-story`
+- `bmad-retrospective`
 
 Only the `SKILL.md` entrypoint is required for sibling BMAD skills. Extra files such as `workflow.md`, `workflow.yaml`, checklists, and templates are resolved when present, but install must not depend on those internal layouts.
 
+If the required dependency skills are missing from all supported roots, the installer exits before copying anything and reports the supported roots that can satisfy the dependency requirement.
+
 Optional:
 
-- `.claude/skills/bmad-qa-generate-e2e-tests/SKILL.md`
+- `bmad-qa-generate-e2e-tests`
 
 If the optional QA skill is missing:
 
@@ -63,10 +136,10 @@ If the optional QA skill is missing:
 
 ## Migration And Backups
 
-Before copying new content, the installer backs up:
+Before copying new content, the installer backs up the existing install targets under each qualifying skill root:
 
-- existing `.claude/skills/bmad-story-automator`
-- existing `.claude/skills/bmad-story-automator-review`
+- existing `bmad-story-automator`
+- existing `bmad-story-automator-review`
 - legacy installs under `_bmad/bmm/4-implementation/...`
 - legacy installs under `_bmad/bmm/workflows/4-implementation/...`
 
@@ -87,13 +160,31 @@ Important nuance:
 The installed helper entrypoint is:
 
 ```text
-.claude/skills/bmad-story-automator/scripts/story-automator
+<installed-skill-root>/bmad-story-automator/scripts/story-automator
 ```
+
+Codex uses the active installed skill root for this helper, but writes hook/config state to `.codex/hooks.json` and `.codex/config.toml`.
 
 That wrapper:
 
 - sets `PYTHONPATH` to the bundled `src`
 - runs `python3 -m story_automator`
+
+## Runtime Provider Resolution
+
+Top-level runtime behavior is resolved separately from child-agent selection:
+
+- runtime provider decides hook/config syntax
+- child-agent selection decides whether spawned work uses Claude or Codex
+
+Provider resolution checks, in order:
+
+1. `BMAD_RUNTIME_PROVIDER`
+2. `STORY_AUTOMATOR_RUNTIME_PROVIDER`
+3. installed/current story-automator skill root
+4. project-local runtime layout fallback
+
+`AI_AGENT` is only for spawned child sessions. It does not decide whether `ensure-stop-hook` writes `.claude/settings.json` or `.codex/{config.toml,hooks.json}`.
 
 ## Repo Layout
 
@@ -112,8 +203,9 @@ No installer-only payload tree exists. The installer copies the same skill folde
 ## Operator Notes
 
 - install target must be a BMAD project with `_bmad/`
-- required sibling skill `SKILL.md` files must already exist
+- required sibling skill `SKILL.md` files must already exist under `.agents/skills`, `.claude/skills`, or `.codex/skills`
 - the review workflow is installed alongside the main orchestrator because review gating is part of completion semantics
+- Windows support currently means Windows via WSL, not native Windows shells
 
 ## Read Next
 

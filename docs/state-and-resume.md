@@ -72,8 +72,14 @@ The state file is updated throughout the run. It is not just a final report.
 During active orchestration, Story Automator writes:
 
 ```text
-.claude/.story-automator-active
+<active-runtime-parent>/.story-automator-active
 ```
+
+Common paths are:
+
+- `.claude/.story-automator-active`
+- `.agents/.story-automator-active`
+- `.codex/.story-automator-active`
 
 The marker contains:
 

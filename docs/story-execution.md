@@ -102,7 +102,7 @@ flowchart TD
     B --> C["Check sprint-status for entire epic"]
     C --> D{"Epic fully complete?"}
     D -->|No| E["Continue with next story"]
-    D -->|Yes| F["Spawn retrospective with Claude"]
+    D -->|Yes| F["Spawn retrospective with configured retro agent"]
     F --> G["Run in YOLO mode"]
     G --> H{"Retro completed?"}
     H -->|Yes| I["Log completed retrospective"]
@@ -113,7 +113,7 @@ flowchart TD
 
 Retrospective rules:
 
-- always Claude
+- uses configured retro agent
 - fully automated
 - non-blocking
 - failure is logged but does not stop the run

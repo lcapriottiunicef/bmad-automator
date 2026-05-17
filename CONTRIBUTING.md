@@ -14,7 +14,7 @@ This repository packages the BMAD story-automator workflow payload plus the Pyth
 - run:
   - `npm run pack:dry-run`
   - `npm run test:smoke`
-  - `PYTHONPATH=source/src python3 -m story_automator --help`
+  - `PYTHONPATH=skills/bmad-story-automator/src python3 -m story_automator --help`
 
 ## PR Notes
 

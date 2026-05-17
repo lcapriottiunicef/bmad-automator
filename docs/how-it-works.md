@@ -4,11 +4,11 @@ This doc explains the orchestration model: how Story Automator decides what mode
 
 ## The Core Model
 
-Story Automator is a Claude-driven orchestrator that coordinates other workflows in isolated tmux sessions.
+Story Automator is a BMAD orchestrator that can coordinate Claude or Codex child workflows in isolated tmux sessions.
 
 The important parts are:
 
-- the main skill in `.claude/skills/bmad-story-automator`
+- the main installed skill under each qualifying dependency skill root
 - the helper CLI at `scripts/story-automator`
 - the markdown orchestration state document
 - sibling BMAD skills such as `bmad-create-story`, `bmad-dev-story`, `bmad-retrospective`, and optional `bmad-qa-generate-e2e-tests`

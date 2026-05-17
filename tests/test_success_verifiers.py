@@ -242,6 +242,33 @@ class SuccessVerifierTests(unittest.TestCase):
         self.assertEqual(payload["exit_reason"], "max_polls_exceeded")
         self.assertFalse(payload["output_verified"])
 
+    def test_monitor_session_runtime_agent_uses_resolved_provider_flags(self) -> None:
+        calls: list[dict[str, object]] = []
+
+        def fake_session_status(*args: object, **kwargs: object) -> dict[str, object]:
+            calls.append(kwargs)
+            return {"active_task": "/tmp/session.txt"}
+
+        stdout = io.StringIO()
+        with patch_env(self.project_root), patch("story_automator.commands.tmux.runtime_provider", return_value="codex"), patch(
+            "story_automator.commands.tmux.session_status", side_effect=fake_session_status
+        ), redirect_stdout(stdout):
+            code = cmd_monitor_session(["fake-session", "--json", "--max-polls", "0", "--agent", "runtime"])
+
+        self.assertEqual(code, 0)
+        self.assertTrue(calls)
+        self.assertTrue(calls[0]["codex"])
+
+    def test_monitor_session_infers_claude_from_legacy_ai_command(self) -> None:
+        stdout = io.StringIO()
+        with patch_env(self.project_root, extra={"AI_COMMAND": "claude --print"}), patch(
+            "story_automator.commands.tmux.session_status",
+            return_value={"active_task": "/tmp/session.txt", "todos_done": 0, "todos_total": 0, "wait_estimate": 5, "session_state": "not_found"},
+        ) as session_status_mock, redirect_stdout(stdout):
+            code = cmd_monitor_session(["fake-session", "--json", "--max-polls", "1"])
+        self.assertEqual(code, 0)
+        self.assertFalse(session_status_mock.call_args.kwargs["codex"])
+
     def test_monitor_dispatch_allows_session_exit_without_story_key(self) -> None:
         result = _verify_monitor_completion(
             "dev",
@@ -698,23 +725,28 @@ class SuccessVerifierTests(unittest.TestCase):
 
 
 class patch_env:
-    def __init__(self, project_root: Path) -> None:
+    def __init__(self, project_root: Path, extra: dict[str, str] | None = None) -> None:
         self.project_root = str(project_root)
-        self.previous = None
+        self.extra = extra or {}
+        self.previous: dict[str, str | None] = {}
 
     def __enter__(self) -> None:
         import os
 
-        self.previous = os.environ.get("PROJECT_ROOT")
+        self.previous["PROJECT_ROOT"] = os.environ.get("PROJECT_ROOT")
         os.environ["PROJECT_ROOT"] = self.project_root
+        for key, value in self.extra.items():
+            self.previous[key] = os.environ.get(key)
+            os.environ[key] = value
 
     def __exit__(self, exc_type, exc, tb) -> None:
         import os
 
-        if self.previous is None:
-            os.environ.pop("PROJECT_ROOT", None)
-        else:
-            os.environ["PROJECT_ROOT"] = self.previous
+        for key, value in self.previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
 
 
 if __name__ == "__main__":
