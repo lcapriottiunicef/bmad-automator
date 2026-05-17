@@ -372,15 +372,15 @@ class StatePolicyMetadataTests(unittest.TestCase):
         self.assertEqual(config["perTask"]["retro"]["primary"], "claude")
         self.assertEqual(config["perTask"]["retro"]["fallback"], False)
 
-    def test_parse_agent_config_preserves_legacy_codex_fallback_when_missing(self) -> None:
+    def test_parse_agent_config_disables_fallback_when_missing(self) -> None:
         config = parse_agent_config(json.dumps({}))
 
-        self.assertEqual(config["defaultFallback"], "codex")
+        self.assertEqual(config["defaultFallback"], "false")
 
-    def test_parse_agent_config_preserves_legacy_codex_fallback_for_claude_primary(self) -> None:
+    def test_parse_agent_config_disables_fallback_for_primary_only(self) -> None:
         config = parse_agent_config(json.dumps({"defaultPrimary": "claude"}))
 
-        self.assertEqual(config["defaultFallback"], "codex")
+        self.assertEqual(config["defaultFallback"], "false")
 
     def test_parse_agent_config_keeps_explicit_disabled_fallback(self) -> None:
         config = parse_agent_config(json.dumps({"defaultPrimary": "claude", "defaultFallback": False}))
@@ -402,10 +402,10 @@ class StatePolicyMetadataTests(unittest.TestCase):
         self.assertEqual(payload["primary"], "codex")
         self.assertEqual(payload["fallback"], "claude")
 
-    def test_build_state_doc_coerces_null_default_fallback_to_codex(self) -> None:
+    def test_build_state_doc_coerces_null_default_fallback_to_false(self) -> None:
         state_file = self._build_state({"agentConfig": {"defaultPrimary": "codex", "defaultFallback": None}})
 
-        self.assertIn('defaultFallback: "codex"', state_file.read_text(encoding="utf-8"))
+        self.assertIn("defaultFallback: false", state_file.read_text(encoding="utf-8"))
 
     def test_build_state_doc_coerces_null_default_primary_to_auto(self) -> None:
         state_file = self._build_state({"agentConfig": {"defaultPrimary": None, "defaultFallback": False}})

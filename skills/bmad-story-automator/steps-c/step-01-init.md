@@ -30,6 +30,7 @@ result=$("{ensureStopHook}" ensure-stop-hook --settings "{settingsFile}" \
   --command "{scripts} stop-hook" --timeout 10)
 ok=$(echo "$result" | jq -r '.ok')
 changed=$(echo "$result" | jq -r '.changed')
+verification_state=$(echo "$result" | jq -r '.verificationState // "verified"')
 message=$(echo "$result" | jq -r '.message // ""') # Helper returns provider-specific restart/setup guidance for Claude or Codex.
 ```
 The settings path is used for Claude; Codex resolves `.codex/hooks.json` and `.codex/config.toml` from the project root.
@@ -50,6 +51,17 @@ This prevents the orchestrator from randomly stopping mid-workflow.
 After restarting, run the story-automator workflow again.
 ```
 **HALT** - Do not proceed until user restarts
+
+**IF verification_state == "pending_trust":**
+Display:
+```
+**Stop Hook Pending Codex Trust**
+
+<message from helper>
+
+Trust this project in Codex, then restart Codex and run the story-automator workflow again.
+```
+**HALT** - Do not proceed until Codex can run the hook
 
 **IF changed == false:**
 Display: "✓ Stop hook verified"

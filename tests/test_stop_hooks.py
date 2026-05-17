@@ -340,6 +340,13 @@ class StopHookTests(unittest.TestCase):
         self.assertFalse(second["trusted"])
         self.assertIn("not yet trusted", second["message"])
 
+    def test_init_step_halts_on_codex_pending_trust(self) -> None:
+        step_text = (REPO_ROOT / "skills" / "bmad-story-automator" / "steps-c" / "step-01-init.md").read_text(encoding="utf-8")
+
+        self.assertIn("verification_state=", step_text)
+        self.assertIn('verification_state == "pending_trust"', step_text)
+        self.assertIn("HALT", step_text)
+
     def test_stop_hook_uses_project_root_env_when_invoked_from_nested_directory(self) -> None:
         self._install_bundle(".agents")
         marker = self.project_root / ".agents" / ".story-automator-active"

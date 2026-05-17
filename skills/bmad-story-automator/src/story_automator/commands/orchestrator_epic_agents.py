@@ -216,10 +216,10 @@ def parse_agent_config(raw: str) -> dict:
     elif "fallback" in data:
         fallback_raw = data.get("fallback")
     else:
-        fallback_raw = "codex"
+        fallback_raw = False
     return {
         "defaultPrimary": data.get("defaultPrimary") or data.get("primary") or "auto",
-        "defaultFallback": "false" if fallback_raw in {False, "false", "none", "null"} else (fallback_raw or "codex"),
+        "defaultFallback": "false" if fallback_raw in {False, "false", "none", "null"} else (fallback_raw or "false"),
         "perTask": per_task,
         "complexityOverrides": complexity_overrides,
     }

@@ -10,6 +10,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
+from story_automator import __version__ as runtime_version
 from story_automator.commands.orchestrator import cmd_orchestrator_helper
 from story_automator.core import runtime_layout
 from story_automator.core.agent_config import parse_agent_config_json, resolve_agent_for_task
@@ -145,7 +146,10 @@ class RuntimeLayoutTests(unittest.TestCase):
             primary, fallback = resolve_agent_for_task(config, "medium", "dev")
 
             self.assertEqual(agent_type(), "codex")
-            self.assertEqual((primary, fallback), ("codex", "codex"))
+            self.assertEqual((primary, fallback), ("codex", "false"))
+
+    def test_runtime_version_tracks_python_preview_version(self) -> None:
+        self.assertEqual(runtime_version, "1.15.0.dev0")
 
     def test_explicit_agent_values_are_normalized(self) -> None:
         config = parse_agent_config_json('{"defaultPrimary":" Codex ","defaultFallback":" Claude "}')

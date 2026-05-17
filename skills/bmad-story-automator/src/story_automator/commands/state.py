@@ -87,9 +87,9 @@ def cmd_build_state_doc(args: list[str]) -> int:
             per_task = {**per_task, "retro": legacy_retro}
         default_fallback = agent_config.get("defaultFallback")
         if "defaultFallback" not in agent_config:
-            default_fallback = agent_config.get("fallback", "codex")
+            default_fallback = agent_config.get("fallback", False)
         if default_fallback is None:
-            default_fallback = "codex"
+            default_fallback = False
         default_primary = agent_config.get("defaultPrimary")
         if default_primary is None:
             default_primary = agent_config.get("primary") or "auto"

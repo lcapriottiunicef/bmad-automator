@@ -49,9 +49,9 @@ def parse_agent_config_json(raw: str) -> AgentConfigResolved:
     elif "fallback" in data:
         fallback_raw = data.get("fallback")
     else:
-        fallback_raw = "codex"
+        fallback_raw = False
     normalized_fallback = normalize_fallback_value(fallback_raw)
-    config.default_fallback = normalized_fallback or "codex"
+    config.default_fallback = normalized_fallback or "false"
     config.per_task = _parse_task_map(data.get("perTask"))
     retro_task = _parse_task_entry(data.get("retro"))
     if retro_task is not None:
