@@ -4,32 +4,32 @@ This doc explains what `npx bmad-story-automator` installs, what it requires, an
 
 ## BMAD Method Channels
 
-Automator is also available through the BMAD Method official module code `baut`. Because the official registry currently sets `baut` to `default_channel: next`, channel selection must be explicit:
+Automator is also available through the BMAD Method official module code `automator`. Because the official registry currently sets `automator` to `default_channel: next`, channel selection must be explicit:
 
-- `--modules baut --all-stable` resolves to the latest pure-semver stable tag.
-- `--pin baut=v1.15.0` resolves to the first Codex-capable stable tag.
-- `--pin baut=v1.14.2` resolves to the pre-Codex stable tag and is the safest rollback path for Claude Code users.
+- `--modules automator --all-stable` resolves to the latest pure-semver stable tag.
+- `--pin automator=v1.15.0` resolves to the first Codex-capable stable tag.
+- `--pin automator=v1.14.2` resolves to the pre-Codex stable tag and is the safest rollback path for Claude Code users.
 - `--custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support` resolves to the branch preview for unpublished follow-up fixes.
-- Unqualified `--modules baut` and `--next baut` resolve to `main` HEAD while `default_channel: next` remains. After Codex support lands on `main`, those commands include Codex support but are not reproducible stable installs.
+- Unqualified `--modules automator` and `--next automator` resolve to `main` HEAD while `default_channel: next` remains. After Codex support lands on `main`, those commands include Codex support but are not reproducible stable installs.
 
 Run these commands from the target BMAD project root, or add `--directory /absolute/path/to/your-bmad-project`.
 
 Stable install:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 Stable pin:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0 --tools codex --yes
 ```
 
 Pre-Codex rollback:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 Branch preview install for unpublished follow-up fixes:
@@ -41,16 +41,16 @@ npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-au
 Rollback from preview or branch testing to the pre-Codex stable tag:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 or:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
-If custom-source discovery asks which plugin to install after reading the branch, choose `bmad-automator`. For custom-source branch testing, confirm the custom-source cache HEAD and installed runtime files; installer metadata can still report the registry `next` ref when the custom source uses official module code `baut`.
+If custom-source discovery asks which plugin to install after reading the branch, choose `bmad-automator`. For custom-source branch testing, confirm the custom-source cache HEAD and installed runtime files; installer metadata can still report the registry `next` ref when the custom source uses official module code `automator`.
 
 The BMAD Method commands above install through `bmad-method` for the requested `--tools` target. The sections below describe the standalone `npx bmad-story-automator` installer and its layout behavior.
 

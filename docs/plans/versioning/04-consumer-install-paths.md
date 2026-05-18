@@ -12,18 +12,18 @@ Document exact install commands for stable users, preview testers, and rollback.
 
 ## Stable Install
 
-Do not use unqualified `--modules baut` for stable while the official registry sets `baut` to `default_channel: next`.
+Do not use unqualified `--modules automator` for stable while the official registry sets `automator` to `default_channel: next`.
 
 Use the stable resolver explicitly:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 To pin stable explicitly:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 ## Next Preview Install
@@ -31,10 +31,10 @@ npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --
 Primary preview path after Phase 03 creates the prerelease tag:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0-next.1 --tools codex --yes
 ```
 
-Use this for Discord testers after the remote tag is published because it stays inside the official `baut` module entry and is reproducible. Do not use the stale local-only `v1.15.0-next.0` tag.
+Use this for Discord testers after the remote tag is published because it stays inside the official `automator` module entry and is reproducible. Do not use the stale local-only `v1.15.0-next.0` tag.
 
 ## Branch Preview Install
 
@@ -57,13 +57,13 @@ This requires the branch manifest to include plugin `skills` entries:
 
 ## Official Next After Merge
 
-The current official registry default for `baut` is already `next`, which means `main` HEAD. Before merge, it installs current `main`, not PR #3.
+The current official registry default for `automator` is already `next`, which means `main` HEAD. Before merge, it installs current `main`, not PR #3.
 
 After Codex support lands on `main`, these become meaningful Codex-preview commands:
 
 ```bash
-npx bmad-method install --modules baut --tools codex --yes
-npx bmad-method install --modules baut --next baut --tools codex --yes
+npx bmad-method install --modules automator --tools codex --yes
+npx bmad-method install --modules automator --next automator --tools codex --yes
 ```
 
 Before merge, do not use either command as the PR preview path.
@@ -73,13 +73,13 @@ Before merge, do not use either command as the PR preview path.
 Reinstall latest stable:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 Or force the stable channel:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 ## Documentation Updates
@@ -89,7 +89,7 @@ Add a short `README.md` section after the preview tag exists:
 - Stable install command
 - Next preview command
 - Rollback command
-- Warning that `--modules baut` and `--next baut` mean `main` HEAD, not PR #3, until merge
+- Warning that `--modules automator` and `--next automator` mean `main` HEAD, not PR #3, until merge
 
 ## Handoff Requirements
 

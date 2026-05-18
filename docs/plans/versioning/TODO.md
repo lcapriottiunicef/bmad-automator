@@ -42,7 +42,7 @@
 - [x] Add preview pin install command.
 - [x] Add branch custom-source install command.
 - [x] Add rollback command.
-- [x] Warn that `--modules baut` and `--next baut` track `main` while registry `default_channel: next` remains.
+- [x] Warn that `--modules automator` and `--next automator` track `main` while registry `default_channel: next` remains.
 - [x] Append Phase 04 notes to `handoff-log.md`.
 
 ## Phase 05 - Verification

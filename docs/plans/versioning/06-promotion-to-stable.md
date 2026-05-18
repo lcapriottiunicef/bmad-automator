@@ -56,26 +56,26 @@ npm publish
 Stable:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools codex --yes
+npx bmad-method install --modules automator --all-stable --tools codex --yes
 ```
 
 Official next:
 
 ```bash
-npx bmad-method install --modules baut --tools codex --yes
-npx bmad-method install --modules baut --next baut --tools codex --yes
+npx bmad-method install --modules automator --tools codex --yes
+npx bmad-method install --modules automator --next automator --tools codex --yes
 ```
 
 Pinned stable:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0 --tools codex --yes
 ```
 
 ## Exit Criteria
 
 - Stable install resolves to `v1.15.0`.
-- `--modules baut` and `--next baut` resolve to `main` HEAD with the same or newer Codex runtime support while registry `default_channel: next` remains in place.
+- `--modules automator` and `--next automator` resolve to `main` HEAD with the same or newer Codex runtime support while registry `default_channel: next` remains in place.
 - Preview docs are replaced with stable docs.
 
 ## Handoff Requirements

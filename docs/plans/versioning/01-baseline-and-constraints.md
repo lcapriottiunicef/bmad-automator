@@ -12,8 +12,8 @@ Lock down what is already true before building the repo-local versioning flow.
 
 ## Current State
 
-- Automator is listed as official module code `baut`.
-- Official marketplace registry currently has `baut` set to `default_channel: next`, so unqualified `--modules baut` installs `main` HEAD.
+- Automator is listed as official module code `automator`.
+- Official marketplace registry currently has `automator` set to `default_channel: next`, so unqualified `--modules automator` installs `main` HEAD.
 - Current stable tag is `v1.14.2`.
 - Current `main` contains `skills/module.yaml`.
 - PR #3 adds Codex runtime support.
@@ -24,7 +24,7 @@ Lock down what is already true before building the repo-local versioning flow.
 
 - Do not change BMAD-METHOD installer code.
 - Do not change the official marketplace registry.
-- Do not depend on `--next baut` for the PR preview unless the PR is merged to `main`.
+- Do not depend on `--next automator` for the PR preview unless the PR is merged to `main`.
 - Do not retag an existing stable version.
 - Keep stable users on pure semver tags by documenting `--all-stable`, `--channel stable`, or explicit `--pin` usage.
 
@@ -47,7 +47,7 @@ Use two preview paths:
 1. A prerelease tag, installed through official module pinning:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0-next.1 --tools codex --yes
 ```
 
 1. A branch preview, installed as custom source:
@@ -56,7 +56,7 @@ npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex -
 npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes
 ```
 
-The prerelease tag is the primary next channel because it is reproducible and uses the existing official `baut` registry entry. The original local-only `v1.15.0-next.0` preview was superseded before publication; use `v1.15.0-next.1` for the current preview.
+The prerelease tag is the primary next channel because it is reproducible and uses the existing official `automator` registry entry. The original local-only `v1.15.0-next.0` preview was superseded before publication; use `v1.15.0-next.1` for the current preview.
 
 ## Handoff Requirements
 

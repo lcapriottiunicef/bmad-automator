@@ -38,13 +38,13 @@ git push automator v1.15.0-next.2
 1. Tell testers to reinstall:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0-next.2 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0-next.2 --tools codex --yes
 ```
 
 1. If no fix is ready, tell testers to return to stable:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 ## Stable Rollback
@@ -71,12 +71,12 @@ When collecting bug reports, ask for:
 - `_bmad/install-manifest.csv`, if present in the affected install
 - target tool: `claude-code`, `codex`, or both
 - exact stderr/stdout from failed installer command
-- whether install was official `--modules baut`, stable-channel, pinned, or `--custom-source`
+- whether install was official `--modules automator`, stable-channel, pinned, or `--custom-source`
 
 Before confirming a custom-source branch install as successful, inspect the
 custom-source cache HEAD and installed skill files. The installer can fail to
 resolve a missing branch while still exiting `0`, leaving only core installed.
-For a custom source that uses the official module code `baut`, BMAD-METHOD 6.6.0
+For a custom source that uses the official module code `automator`, BMAD-METHOD 6.6.0
 can still write official registry `next`/`main` metadata to
 `_bmad/_config/manifest.yaml`; treat that manifest metadata as insufficient
 proof of the installed ref.
@@ -95,16 +95,16 @@ Actual behavior:
 
 ## Known Confusion To Avoid
 
-`--next baut` means `main` HEAD. It does not mean:
+`--next automator` means `main` HEAD. It does not mean:
 
 - open PR head
 - `next/codex-runtime-support` branch
 - prerelease npm dist-tag
 - prerelease semver git tag
 
-For PR preview, use `--pin baut=v1.15.0-next.N` or `--custom-source ...@next/codex-runtime-support`.
+For PR preview, use `--pin automator=v1.15.0-next.N` or `--custom-source ...@next/codex-runtime-support`.
 
-While the official registry keeps `baut` on `default_channel: next`, unqualified `--modules baut` also means `main` HEAD. Use `--all-stable` or `--pin baut=<stable-tag>` for stable rollback.
+While the official registry keeps `automator` on `default_channel: next`, unqualified `--modules automator` also means `main` HEAD. Use `--all-stable` or `--pin automator=<stable-tag>` for stable rollback.
 
 ## Handoff Requirements
 

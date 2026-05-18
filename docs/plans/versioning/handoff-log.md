@@ -56,7 +56,7 @@ exact command
 - Confirmed `automator/main` contains `skills/module.yaml`.
 - Confirmed PR #3 still lacks `skills/module.yaml`.
 - Confirmed PR #3 still applies cleanly to current `automator/main` with `git merge-tree --write-tree`.
-- Reconfirmed official registry `baut` has `default_channel: next`.
+- Reconfirmed official registry `automator` has `default_channel: next`.
 
 ### Commands Run
 
@@ -93,7 +93,7 @@ git merge-tree --write-tree automator/main automator/pr/3
 - Phase 02 should still base the integration branch on freshly fetched `automator/main` at `956198ca52bb3342b73567f76f5981950286f8d8`.
 - Phase 02 can apply PR #3 from `automator/pr/3` because the current merge-tree check is clean.
 - Phase 02 must preserve or restore `skills/module.yaml` from `automator/main` because PR #3 does not contain it.
-- Preserve the prior plan assumption that `--modules baut` and `--next baut` resolve to `main` while official registry `default_channel: next` remains.
+- Preserve the prior plan assumption that `--modules automator` and `--next automator` resolve to `main` while official registry `default_channel: next` remains.
 
 ### Blockers Or Risks
 
@@ -121,7 +121,7 @@ git fetch automator main '+refs/pull/3/head:refs/remotes/automator/pr/3' --no-ta
 gh pr view https://github.com/bmad-code-org/bmad-automator/pull/3 --comments --json state,mergeable,headRefName,baseRefName,files,commits,headRepositoryOwner,headRepository,updatedAt
 gh api repos/bmad-code-org/bmad-plugins-marketplace/contents/registry/official.yaml --jq .content | base64 -d
 npm pack bmad-method@6.6.0 --json
-npx --yes bmad-method@6.6.0 install --modules baut --tools codex --yes --directory /tmp/baut-default-smoke
+npx --yes bmad-method@6.6.0 install --modules automator --tools codex --yes --directory /tmp/automator-default-smoke
 git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.0 main v1.14.2
 ```
 
@@ -133,15 +133,15 @@ git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.0
 - PR #3 commits are still `cf96221`, `b3a4c9e`, `05dad8c`.
 - Latest stable tag on `bmad-code-org/bmad-automator`: `v1.14.2` at `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
 - `next/codex-runtime-support` and `v1.15.0-next.0` do not exist yet on `automator`.
-- Official registry currently sets `baut` to `default_channel: next`; unqualified `--modules baut` installed `baut` as `channel: next`, `version: main`, `sha: 956198ca52bb3342b73567f76f5981950286f8d8`.
+- Official registry currently sets `automator` to `default_channel: next`; unqualified `--modules automator` installed `automator` as `channel: next`, `version: main`, `sha: 956198ca52bb3342b73567f76f5981950286f8d8`.
 - BMB `.claude-plugin/marketplace.json` uses plugin-level `source: "./"`, `version`, and `skills` entries; this validates the plan's custom-source shape.
 - BMB package/plugin version is `1.8.0`, but BMB `skills/module.yaml` keeps `module_version: 1.0.0`; Automator currently uses `module_version: "1.14.2"`, so Phase 02 must explicitly decide whether to preserve Automator's local release-version convention.
 
 ### Decisions And Assumptions
 
-- Stable docs must not present unqualified `--modules baut` as stable while registry `default_channel: next` remains.
-- Stable installs should use `--all-stable`, `--channel stable`, or explicit `--pin baut=<stable-tag>`.
-- PR preview remains a prerelease tag or custom-source branch, not `--modules baut`/`--next baut`, until PR #3 lands on `main`.
+- Stable docs must not present unqualified `--modules automator` as stable while registry `default_channel: next` remains.
+- Stable installs should use `--all-stable`, `--channel stable`, or explicit `--pin automator=<stable-tag>`.
+- PR preview remains a prerelease tag or custom-source branch, not `--modules automator`/`--next automator`, until PR #3 lands on `main`.
 - Phase 05 must verify `.claude-plugin/marketplace.json` plugin `source`, `version`, and exact `skills`, not just the presence of a `skills` array.
 
 ### Blockers Or Risks
@@ -216,7 +216,7 @@ git commit -m "fix: harden codex preview runtime defaults"
 
 - Remote branch and preview tag are not pushed/created yet. Phase 03 owns that.
 - `next/codex-runtime-support` is local only in `<integration-worktree>`.
-- Official registry `default_channel: next` still points unqualified `--modules baut` at `main`, not this local preview branch.
+- Official registry `default_channel: next` still points unqualified `--modules automator` at `main`, not this local preview branch.
 
 ### Next Phase Notes
 
@@ -277,14 +277,14 @@ git push automator v1.15.0-next.0
 - Treat local tag creation as completed preparation, not remote publication.
 - Keep Phase 03 remote publication tasks open until a remote-enabled agent pushes both the branch and the tag.
 - Do not publish npm `next` for this phase; document the git tag/module installer path first.
-- Canonical Phase 04 preview install command after remote tag push: `--pin baut=v1.15.0-next.0`.
+- Canonical Phase 04 preview install command after remote tag push: `--pin automator=v1.15.0-next.0`.
 - Branch preview command for Phase 04 docs after remote branch push: `--custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support`.
 
 ### Blockers Or Risks
 
 - Remote `next/codex-runtime-support` and remote `v1.15.0-next.0` still need publication.
 - Do not move `v1.15.0-next.0` after it is pushed; fixes must use `v1.15.0-next.1` or later.
-- Official registry `default_channel: next` still makes unqualified `--modules baut` resolve to `main`, not this preview.
+- Official registry `default_channel: next` still makes unqualified `--modules automator` resolve to `main`, not this preview.
 
 ### Next Phase Notes
 
@@ -306,7 +306,7 @@ git push automator v1.15.0-next.0
 - Updated consumer-facing install docs on the local integration worktree in `<integration-worktree>`.
 - Committed product docs as `7603220ef1b39671977accfd2ea14b72c8ab52a3` (`docs: document automator install channels`) on `next/codex-runtime-support`.
 - Documented stable, pinned preview, branch preview, and rollback install paths.
-- Preserved the warning that official `baut` currently has `default_channel: next`, so unqualified `--modules baut` and `--next baut` resolve to `main` HEAD.
+- Preserved the warning that official `automator` currently has `default_channel: next`, so unqualified `--modules automator` and `--next automator` resolve to `main` HEAD.
 - Kept Phase 03 remote publication tasks open; preview commands are documented with the requirement that the remote tag or branch must exist first.
 
 ### Commands Run
@@ -335,19 +335,19 @@ tmp=$(mktemp -d); cd "$tmp" && npm pack bmad-method@6.6.0 --json >/dev/null && t
 - Stable channel-forced command:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 - Stable pin command:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 - Codex preview pin command, valid after remote tag publication:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0-next.0 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0-next.0 --tools codex --yes
 ```
 
 - Branch preview command, valid after remote branch publication:
@@ -359,14 +359,14 @@ npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-au
 - Rollback commands:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 ### Decisions And Assumptions
 
 - Stable rollback remains documented with `claude-code` because `v1.14.2` is the current stable release and Codex support is still preview-only.
-- The primary Codex preview path is the pinned prerelease tag because it stays inside the official `baut` module entry and is reproducible after the tag is pushed.
+- The primary Codex preview path is the pinned prerelease tag because it stays inside the official `automator` module entry and is reproducible after the tag is pushed.
 - The branch preview path is for unpublished branch testing only after `next/codex-runtime-support` is available remotely.
 - If custom-source discovery asks for a plugin, choose `bmad-automator`.
 
@@ -374,7 +374,7 @@ npx bmad-method install --modules baut --all-stable --tools claude-code --yes
 
 - Remote `next/codex-runtime-support` and remote `v1.15.0-next.0` are still not pushed in this plan state.
 - Do not move `v1.15.0-next.0` after it is pushed; cut `v1.15.0-next.1` for fixes.
-- Published docs must not imply that current unqualified `--modules baut` installs the preview before PR #3 reaches `main`.
+- Published docs must not imply that current unqualified `--modules automator` installs the preview before PR #3 reaches `main`.
 
 ### Next Phase Notes
 
@@ -388,7 +388,7 @@ npx bmad-method install --modules baut --all-stable --tools claude-code --yes
 
 - Ran Phase 05 local package, metadata, stable/default installer, and preview-blocker verification.
 - Verified `<integration-worktree>` still packages as `1.15.0-next.0`.
-- Verified official registry default installs `baut` from `main @ 956198c`, not the pre-merge preview.
+- Verified official registry default installs `automator` from `main @ 956198c`, not the pre-merge preview.
 - Verified stable pin installs select `v1.14.2`.
 - Observed all-stable selects `v1.14.2` under current remote refs; true prerelease-exclusion remains unverified because no remote prerelease tag exists.
 - Confirmed remote `v1.15.0-next.0` tag and remote `next/codex-runtime-support` branch are still absent.
@@ -414,20 +414,20 @@ cd <integration-worktree> && python3 - <<'PY'
 from pathlib import Path
 print(Path("skills/module.yaml").read_text())
 PY
-rm -rf /tmp/baut-home-default /tmp/baut-npm-default /tmp/baut-default-smoke-isolated && env HOME=/tmp/baut-home-default NPM_CONFIG_CACHE=/tmp/baut-npm-default npx --yes bmad-method@6.6.0 install --modules baut --tools codex --yes --directory /tmp/baut-default-smoke-isolated
-rm -rf /tmp/baut-home-stable /tmp/baut-npm-stable /tmp/baut-stable-smoke-isolated && env HOME=/tmp/baut-home-stable NPM_CONFIG_CACHE=/tmp/baut-npm-stable npx --yes bmad-method@6.6.0 install --modules baut --pin baut=v1.14.2 --tools claude-code --yes --directory /tmp/baut-stable-smoke-isolated
-rm -rf /tmp/baut-home-all-stable /tmp/baut-npm-all-stable /tmp/baut-all-stable-smoke-isolated && env HOME=/tmp/baut-home-all-stable NPM_CONFIG_CACHE=/tmp/baut-npm-all-stable npx --yes bmad-method@6.6.0 install --modules baut --all-stable --tools claude-code --yes --directory /tmp/baut-all-stable-smoke-isolated
-rm -rf /tmp/baut-home-next /tmp/baut-npm-next /tmp/baut-next-smoke-isolated && env HOME=/tmp/baut-home-next NPM_CONFIG_CACHE=/tmp/baut-npm-next npx --yes bmad-method@6.6.0 install --modules baut --pin baut=v1.15.0-next.0 --tools codex --yes --directory /tmp/baut-next-smoke-isolated
-rm -rf /tmp/baut-home-branch /tmp/baut-npm-branch /tmp/baut-branch-smoke-isolated && env HOME=/tmp/baut-home-branch NPM_CONFIG_CACHE=/tmp/baut-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/baut-branch-smoke-isolated
-sed -n '1,220p' /tmp/baut-default-smoke-isolated/_bmad/_config/manifest.yaml
-sed -n '1,220p' /tmp/baut-stable-smoke-isolated/_bmad/_config/manifest.yaml
-sed -n '1,220p' /tmp/baut-all-stable-smoke-isolated/_bmad/_config/manifest.yaml
-if test -f /tmp/baut-default-smoke-isolated/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/baut-default-smoke-isolated/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo default_runtime_files=present; else echo default_runtime_files=absent; fi
-if test -f /tmp/baut-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/baut-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo stable_runtime_files=present; else echo stable_runtime_files=absent; fi
-if test -f /tmp/baut-all-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/baut-all-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo all_stable_runtime_files=present; else echo all_stable_runtime_files=absent; fi
-if [ -e /tmp/baut-next-smoke-isolated/_bmad/_config/manifest.yaml ]; then sed -n '1,220p' /tmp/baut-next-smoke-isolated/_bmad/_config/manifest.yaml; else echo 'next_isolated_manifest=absent'; fi
-sed -n '1,220p' /tmp/baut-branch-smoke-isolated/_bmad/_config/manifest.yaml
-find /tmp/baut-branch-smoke-isolated -maxdepth 4 -type d \( -name '*automator*' -o -name 'baut' \) | sort
+rm -rf /tmp/automator-home-default /tmp/automator-npm-default /tmp/automator-default-smoke-isolated && env HOME=/tmp/automator-home-default NPM_CONFIG_CACHE=/tmp/automator-npm-default npx --yes bmad-method@6.6.0 install --modules automator --tools codex --yes --directory /tmp/automator-default-smoke-isolated
+rm -rf /tmp/automator-home-stable /tmp/automator-npm-stable /tmp/automator-stable-smoke-isolated && env HOME=/tmp/automator-home-stable NPM_CONFIG_CACHE=/tmp/automator-npm-stable npx --yes bmad-method@6.6.0 install --modules automator --pin automator=v1.14.2 --tools claude-code --yes --directory /tmp/automator-stable-smoke-isolated
+rm -rf /tmp/automator-home-all-stable /tmp/automator-npm-all-stable /tmp/automator-all-stable-smoke-isolated && env HOME=/tmp/automator-home-all-stable NPM_CONFIG_CACHE=/tmp/automator-npm-all-stable npx --yes bmad-method@6.6.0 install --modules automator --all-stable --tools claude-code --yes --directory /tmp/automator-all-stable-smoke-isolated
+rm -rf /tmp/automator-home-next /tmp/automator-npm-next /tmp/automator-next-smoke-isolated && env HOME=/tmp/automator-home-next NPM_CONFIG_CACHE=/tmp/automator-npm-next npx --yes bmad-method@6.6.0 install --modules automator --pin automator=v1.15.0-next.0 --tools codex --yes --directory /tmp/automator-next-smoke-isolated
+rm -rf /tmp/automator-home-branch /tmp/automator-npm-branch /tmp/automator-branch-smoke-isolated && env HOME=/tmp/automator-home-branch NPM_CONFIG_CACHE=/tmp/automator-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/automator-branch-smoke-isolated
+sed -n '1,220p' /tmp/automator-default-smoke-isolated/_bmad/_config/manifest.yaml
+sed -n '1,220p' /tmp/automator-stable-smoke-isolated/_bmad/_config/manifest.yaml
+sed -n '1,220p' /tmp/automator-all-stable-smoke-isolated/_bmad/_config/manifest.yaml
+if test -f /tmp/automator-default-smoke-isolated/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/automator-default-smoke-isolated/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo default_runtime_files=present; else echo default_runtime_files=absent; fi
+if test -f /tmp/automator-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/automator-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo stable_runtime_files=present; else echo stable_runtime_files=absent; fi
+if test -f /tmp/automator-all-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py || test -f /tmp/automator-all-stable-smoke-isolated/.claude/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py; then echo all_stable_runtime_files=present; else echo all_stable_runtime_files=absent; fi
+if [ -e /tmp/automator-next-smoke-isolated/_bmad/_config/manifest.yaml ]; then sed -n '1,220p' /tmp/automator-next-smoke-isolated/_bmad/_config/manifest.yaml; else echo 'next_isolated_manifest=absent'; fi
+sed -n '1,220p' /tmp/automator-branch-smoke-isolated/_bmad/_config/manifest.yaml
+find /tmp/automator-branch-smoke-isolated -maxdepth 4 -type d \( -name '*automator*' -o -name 'automator' \) | sort
 git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.0 main v1.14.2
 ```
 
@@ -451,13 +451,13 @@ git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.0
 ```
 
 - `skills/module.yaml` contains `module_version: "1.15.0-next.0"`.
-- `/tmp/baut-default-smoke-isolated` passed and installed `BMad Automator (main @ 956198c)`.
-- `/tmp/baut-default-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: next`, `version: main`, and SHA `956198ca52bb3342b73567f76f5981950286f8d8`.
-- `/tmp/baut-default-smoke-isolated` does not include `runtime_layout.py` or `stop_hooks.py`, confirming current registry default is not the pre-merge Codex runtime preview.
-- `/tmp/baut-stable-smoke-isolated` passed and installed `BMad Automator (v1.14.2)`.
-- `/tmp/baut-stable-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: pinned`, `version: v1.14.2`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
-- `/tmp/baut-all-stable-smoke-isolated` passed and installed `BMad Automator (v1.14.2)`.
-- `/tmp/baut-all-stable-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: stable`, `version: v1.14.2`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
+- `/tmp/automator-default-smoke-isolated` passed and installed `BMad Automator (main @ 956198c)`.
+- `/tmp/automator-default-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: next`, `version: main`, and SHA `956198ca52bb3342b73567f76f5981950286f8d8`.
+- `/tmp/automator-default-smoke-isolated` does not include `runtime_layout.py` or `stop_hooks.py`, confirming current registry default is not the pre-merge Codex runtime preview.
+- `/tmp/automator-stable-smoke-isolated` passed and installed `BMad Automator (v1.14.2)`.
+- `/tmp/automator-stable-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: pinned`, `version: v1.14.2`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
+- `/tmp/automator-all-stable-smoke-isolated` passed and installed `BMad Automator (v1.14.2)`.
+- `/tmp/automator-all-stable-smoke-isolated/_bmad/_config/manifest.yaml` records `channel: stable`, `version: v1.14.2`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
 - Because remote `v1.15.0-next.0` is absent, this all-stable run verifies current stable selection only; it does not prove prerelease exclusion in the presence of a remote prerelease tag.
 - Stable and all-stable installs do not include `runtime_layout.py` or `stop_hooks.py`.
 - Preview pin failed because the remote prerelease tag is absent:
@@ -470,19 +470,19 @@ Installation failed: Tag 'v1.15.0-next.0' not found in bmad-code-org/bmad-automa
 
 ```text
 Failed to resolve https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support
-Failed to clone https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support: Command failed: git clone --depth 1 --branch "next/codex-runtime-support" "https://github.com/bmad-code-org/bmad-automator" "/tmp/baut-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator"
+Failed to clone https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support: Command failed: git clone --depth 1 --branch "next/codex-runtime-support" "https://github.com/bmad-code-org/bmad-automator" "/tmp/automator-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator"
 fatal: Remote branch next/codex-runtime-support not found in upstream origin
 ```
 
-- `/tmp/baut-next-smoke-isolated` has no `_bmad/_config/manifest.yaml`.
-- `/tmp/baut-branch-smoke-isolated/_bmad/_config/manifest.yaml` contains only the built-in `core` module. There is no `baut` or custom Automator module directory under that smoke project.
+- `/tmp/automator-next-smoke-isolated` has no `_bmad/_config/manifest.yaml`.
+- `/tmp/automator-branch-smoke-isolated/_bmad/_config/manifest.yaml` contains only the built-in `core` module. There is no `automator` or custom Automator module directory under that smoke project.
 - `git ls-remote` showed only `automator/main` and `v1.14.2`; remote `next/codex-runtime-support` and `v1.15.0-next.0` are absent.
 - Initial parallel installer smoke attempts against the shared global cache failed. These were superseded by isolated disposable `HOME`/npm-cache runs above. Exact failure lines:
 
 ```text
 fatal: shallow file has changed since we read it
-ENOENT: no such file or directory, scandir '<home>/.bmad/cache/external-modules/baut/skills'
-fatal: destination path '<home>/.bmad/cache/external-modules/baut' already exists and is not an empty directory.
+ENOENT: no such file or directory, scandir '<home>/.bmad/cache/external-modules/automator/skills'
+fatal: destination path '<home>/.bmad/cache/external-modules/automator' already exists and is not an empty directory.
 ```
 
 ### Decisions And Assumptions
@@ -517,8 +517,8 @@ git push automator <verified-preview-tag>
 - After publication, rerun:
 
 ```bash
-npx --yes bmad-method@6.6.0 install --modules baut --pin baut=<verified-preview-tag> --tools codex --yes --directory /tmp/baut-next-smoke
-npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/baut-branch-smoke
+npx --yes bmad-method@6.6.0 install --modules automator --pin automator=<verified-preview-tag> --tools codex --yes --directory /tmp/automator-next-smoke
+npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/automator-branch-smoke
 ```
 
 ## Phase 05.5 - 2026-05-17 - Codex quick-dev
@@ -656,18 +656,18 @@ git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.1
 - Post-publication verification commands:
 
 ```bash
-rm -rf /tmp/baut-next-smoke /tmp/baut-branch-smoke /tmp/baut-all-stable-smoke /tmp/baut-home-next /tmp/baut-home-branch /tmp/baut-home-all-stable /tmp/baut-npm-next /tmp/baut-npm-branch /tmp/baut-npm-all-stable
-env HOME=/tmp/baut-home-next NPM_CONFIG_CACHE=/tmp/baut-npm-next npx --yes bmad-method@6.6.0 install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes --directory /tmp/baut-next-smoke
-env HOME=/tmp/baut-home-branch NPM_CONFIG_CACHE=/tmp/baut-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/baut-branch-smoke
-env HOME=/tmp/baut-home-all-stable NPM_CONFIG_CACHE=/tmp/baut-npm-all-stable npx --yes bmad-method@6.6.0 install --modules baut --all-stable --tools claude-code --yes --directory /tmp/baut-all-stable-smoke
-rg -n 'name: baut|channel: pinned|version: v1\.15\.0-next\.1' /tmp/baut-next-smoke/_bmad/_config/manifest.yaml
-rg -n 'name: (baut|bmad-automator)|source: custom|channel: pinned|version: next/codex-runtime-support|sha:' /tmp/baut-branch-smoke/_bmad/_config/manifest.yaml
-rg -n 'name: baut|channel: stable|version: v[0-9]+\.[0-9]+\.[0-9]+$' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
-if rg -n 'version: v[0-9]+\.[0-9]+\.[0-9]+-' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml; then echo 'all-stable selected prerelease' >&2; exit 1; fi
-test -f /tmp/baut-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
-test -f /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+rm -rf /tmp/automator-next-smoke /tmp/automator-branch-smoke /tmp/automator-all-stable-smoke /tmp/automator-home-next /tmp/automator-home-branch /tmp/automator-home-all-stable /tmp/automator-npm-next /tmp/automator-npm-branch /tmp/automator-npm-all-stable
+env HOME=/tmp/automator-home-next NPM_CONFIG_CACHE=/tmp/automator-npm-next npx --yes bmad-method@6.6.0 install --modules automator --pin automator=v1.15.0-next.1 --tools codex --yes --directory /tmp/automator-next-smoke
+env HOME=/tmp/automator-home-branch NPM_CONFIG_CACHE=/tmp/automator-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/automator-branch-smoke
+env HOME=/tmp/automator-home-all-stable NPM_CONFIG_CACHE=/tmp/automator-npm-all-stable npx --yes bmad-method@6.6.0 install --modules automator --all-stable --tools claude-code --yes --directory /tmp/automator-all-stable-smoke
+rg -n 'name: automator|channel: pinned|version: v1\.15\.0-next\.1' /tmp/automator-next-smoke/_bmad/_config/manifest.yaml
+rg -n 'name: (automator|bmad-automator)|source: custom|channel: pinned|version: next/codex-runtime-support|sha:' /tmp/automator-branch-smoke/_bmad/_config/manifest.yaml
+rg -n 'name: automator|channel: stable|version: v[0-9]+\.[0-9]+\.[0-9]+$' /tmp/automator-all-stable-smoke/_bmad/_config/manifest.yaml
+if rg -n 'version: v[0-9]+\.[0-9]+\.[0-9]+-' /tmp/automator-all-stable-smoke/_bmad/_config/manifest.yaml; then echo 'all-stable selected prerelease' >&2; exit 1; fi
+test -f /tmp/automator-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+test -f /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
 ```
 
 - Start Phase 06 stable promotion only after preview publication and the post-publication checks above pass and are recorded.
@@ -679,7 +679,7 @@ test -f /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_aut
 - Completed local Phase 07 rollback-support preparation only.
 - Updated `07-rollback-and-support.md` with current support state, the observed manifest path, and a support triage template.
 - Updated `.github/ISSUE_TEMPLATE/bug_report.yml` to collect install path type, tag/branch/package version, target tool, manifest, and installer stdout/stderr.
-- Updated `docs/troubleshooting.md` with BMAD Method rollback, `--next baut` confusion, and custom-source false-success guidance.
+- Updated `docs/troubleshooting.md` with BMAD Method rollback, `--next automator` confusion, and custom-source false-success guidance.
 - Marked only non-incident Phase 07 tasks complete in `TODO.md`: read, support notes, and handoff.
 - Did not cut `v1.15.0-next.2` because no bad published preview exists.
 - Did not cut a stable patch tag because `v1.15.0` has not shipped.
@@ -719,7 +719,7 @@ PY
 - Support notes now ask for `_bmad/_config/manifest.yaml`; `_bmad/install-manifest.csv` is listed only if present.
 - Public bug reports now collect the Phase 07 support fields needed for install, rollback, pin, and custom-source failures.
 - Issue-template YAML parsed successfully with `PyYAML`.
-- Troubleshooting now warns that `--modules baut` and `--next baut` are not stable rollback or pre-merge preview paths while the registry default remains `next`.
+- Troubleshooting now warns that `--modules automator` and `--next automator` are not stable rollback or pre-merge preview paths while the registry default remains `next`.
 
 ### Decisions And Assumptions
 
@@ -773,21 +773,21 @@ git rev-parse HEAD v1.15.0-next.1^{}
 git push automator next/codex-runtime-support
 git push automator v1.15.0-next.1
 git ls-remote --heads --tags automator next/codex-runtime-support v1.15.0-next.1 main v1.14.2
-rm -rf /tmp/baut-next-smoke /tmp/baut-branch-smoke /tmp/baut-all-stable-smoke /tmp/baut-home-next /tmp/baut-home-branch /tmp/baut-home-all-stable /tmp/baut-npm-next /tmp/baut-npm-branch /tmp/baut-npm-all-stable
-env HOME=/tmp/baut-home-next NPM_CONFIG_CACHE=/tmp/baut-npm-next npx --yes bmad-method@6.6.0 install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes --directory /tmp/baut-next-smoke
-env HOME=/tmp/baut-home-branch NPM_CONFIG_CACHE=/tmp/baut-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/baut-branch-smoke
-env HOME=/tmp/baut-home-all-stable NPM_CONFIG_CACHE=/tmp/baut-npm-all-stable npx --yes bmad-method@6.6.0 install --modules baut --all-stable --tools claude-code --yes --directory /tmp/baut-all-stable-smoke
-rg -n 'name: baut|channel: pinned|version: v1\.15\.0-next\.1' /tmp/baut-next-smoke/_bmad/_config/manifest.yaml
-rg -n 'name: (baut|bmad-automator)|source: custom|channel: pinned|version: next/codex-runtime-support|sha:' /tmp/baut-branch-smoke/_bmad/_config/manifest.yaml
-rg -n 'name: baut|channel: stable|version: v[0-9]+\.[0-9]+\.[0-9]+$' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
-if rg -n 'version: v[0-9]+\.[0-9]+\.[0-9]+-' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml; then echo 'all-stable selected prerelease' >&2; exit 1; fi
-test -f /tmp/baut-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
-test -f /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
-sed -n '1,80p' /tmp/baut-next-smoke/_bmad/_config/manifest.yaml
-sed -n '1,80p' /tmp/baut-branch-smoke/_bmad/_config/manifest.yaml
-sed -n '1,80p' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
+rm -rf /tmp/automator-next-smoke /tmp/automator-branch-smoke /tmp/automator-all-stable-smoke /tmp/automator-home-next /tmp/automator-home-branch /tmp/automator-home-all-stable /tmp/automator-npm-next /tmp/automator-npm-branch /tmp/automator-npm-all-stable
+env HOME=/tmp/automator-home-next NPM_CONFIG_CACHE=/tmp/automator-npm-next npx --yes bmad-method@6.6.0 install --modules automator --pin automator=v1.15.0-next.1 --tools codex --yes --directory /tmp/automator-next-smoke
+env HOME=/tmp/automator-home-branch NPM_CONFIG_CACHE=/tmp/automator-npm-branch npx --yes bmad-method@6.6.0 install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/automator-branch-smoke
+env HOME=/tmp/automator-home-all-stable NPM_CONFIG_CACHE=/tmp/automator-npm-all-stable npx --yes bmad-method@6.6.0 install --modules automator --all-stable --tools claude-code --yes --directory /tmp/automator-all-stable-smoke
+rg -n 'name: automator|channel: pinned|version: v1\.15\.0-next\.1' /tmp/automator-next-smoke/_bmad/_config/manifest.yaml
+rg -n 'name: (automator|bmad-automator)|source: custom|channel: pinned|version: next/codex-runtime-support|sha:' /tmp/automator-branch-smoke/_bmad/_config/manifest.yaml
+rg -n 'name: automator|channel: stable|version: v[0-9]+\.[0-9]+\.[0-9]+$' /tmp/automator-all-stable-smoke/_bmad/_config/manifest.yaml
+if rg -n 'version: v[0-9]+\.[0-9]+\.[0-9]+-' /tmp/automator-all-stable-smoke/_bmad/_config/manifest.yaml; then echo 'all-stable selected prerelease' >&2; exit 1; fi
+test -f /tmp/automator-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-next-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+test -f /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+sed -n '1,80p' /tmp/automator-next-smoke/_bmad/_config/manifest.yaml
+sed -n '1,80p' /tmp/automator-branch-smoke/_bmad/_config/manifest.yaml
+sed -n '1,80p' /tmp/automator-all-stable-smoke/_bmad/_config/manifest.yaml
 ```
 
 ### Results
@@ -812,10 +812,10 @@ sed -n '1,80p' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
   - `refs/heads/next/codex-runtime-support` at `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`.
   - `refs/tags/v1.14.2` at `593f338532ea730b5c1a2dd86681e87b5b4f04dd`.
   - `refs/tags/v1.15.0-next.1` tag object `4736b5c39a1c7a6306212efdb484499a69ba2227`.
-- Preview pin install passed. Manifest records `name: baut`, `version: v1.15.0-next.1`, `channel: pinned`, and SHA `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`. Runtime files `runtime_layout.py` and `stop_hooks.py` exist under `.agents/skills`.
-- All-stable install passed. Manifest records `name: baut`, `version: v1.14.2`, `channel: stable`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`. The prerelease-regex guard found no prerelease version in the all-stable manifest.
+- Preview pin install passed. Manifest records `name: automator`, `version: v1.15.0-next.1`, `channel: pinned`, and SHA `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`. Runtime files `runtime_layout.py` and `stop_hooks.py` exist under `.agents/skills`.
+- All-stable install passed. Manifest records `name: automator`, `version: v1.14.2`, `channel: stable`, and SHA `593f338532ea730b5c1a2dd86681e87b5b4f04dd`. The prerelease-regex guard found no prerelease version in the all-stable manifest.
 - Custom-source branch install cloned the custom repository and installed runtime files. The installed helper package reports `1.15.0.dev1`, matching the preview branch content.
-- Custom-source branch manifest mismatch: `/tmp/baut-branch-smoke/_bmad/_config/manifest.yaml` records `version: main`, `channel: next`, and SHA `5196bb2e3bf88b4c7c9e1ad260ff826c372e01b6` instead of `next/codex-runtime-support` or `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`.
+- Custom-source branch manifest mismatch: `/tmp/automator-branch-smoke/_bmad/_config/manifest.yaml` records `version: main`, `channel: next`, and SHA `5196bb2e3bf88b4c7c9e1ad260ff826c372e01b6` instead of `next/codex-runtime-support` or `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`.
 
 ### Decisions And Assumptions
 
@@ -836,8 +836,8 @@ sed -n '1,80p' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
 ### Summary
 
 - Root cause: BMAD-METHOD 6.6.0 has separate install-content and manifest-metadata paths for official module codes.
-- Install content path checks `CustomModuleManager.getResolution(moduleName)` first and installs the custom-source plugin resolution for `baut`.
-- Manifest metadata path checks `ExternalModuleManager.getModuleByCode(moduleName)` before custom-source resolution, so official `baut` metadata wins and the manifest records registry `next`/`main`.
+- Install content path checks `CustomModuleManager.getResolution(moduleName)` first and installs the custom-source plugin resolution for `automator`.
+- Manifest metadata path checks `ExternalModuleManager.getModuleByCode(moduleName)` before custom-source resolution, so official `automator` metadata wins and the manifest records registry `next`/`main`.
 - Verified the branch content actually installed:
   - custom-source cache HEAD: `ef18ba5a4e1d4e1414adba7b1a1ef2f8d164b94c`
   - cache branch: `next/codex-runtime-support`
@@ -845,20 +845,20 @@ sed -n '1,80p' /tmp/baut-all-stable-smoke/_bmad/_config/manifest.yaml
   - installed helper version: `1.15.0.dev1`
   - installed runtime files: `runtime_layout.py`, `stop_hooks.py`
 - Accepted this as BMAD-METHOD metadata drift, not Automator preview failure.
-- Updated verification/support docs to require custom-source cache HEAD and installed runtime-file checks instead of requiring manifest branch metadata for official code `baut`.
+- Updated verification/support docs to require custom-source cache HEAD and installed runtime-file checks instead of requiring manifest branch metadata for official code `automator`.
 - Marked Phase 05 custom-source verification complete in `TODO.md`.
 
 ### Commands Run
 
 ```bash
-git -C /tmp/baut-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator rev-parse HEAD
-git -C /tmp/baut-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator branch --show-current
-git -C /tmp/baut-home-branch/.bmad/cache/external-modules/baut rev-parse HEAD
-cmp -s /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py /tmp/baut-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-cmp -s /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py /tmp/baut-home-branch/.bmad/cache/external-modules/baut/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-rg -n "version|__version__" /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/pyproject.toml /tmp/baut-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/__init__.py
-sed -n '270,360p' /tmp/baut-npm-branch/_npx/d1483d74adee2f79/node_modules/bmad-method/tools/installer/core/manifest.js
-sed -n '600,665p' /tmp/baut-npm-branch/_npx/d1483d74adee2f79/node_modules/bmad-method/tools/installer/core/installer.js
+git -C /tmp/automator-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator rev-parse HEAD
+git -C /tmp/automator-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator branch --show-current
+git -C /tmp/automator-home-branch/.bmad/cache/external-modules/automator rev-parse HEAD
+cmp -s /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py /tmp/automator-home-branch/.bmad/cache/custom-modules/github.com/bmad-code-org/bmad-automator/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+cmp -s /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py /tmp/automator-home-branch/.bmad/cache/external-modules/automator/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+rg -n "version|__version__" /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/pyproject.toml /tmp/automator-branch-smoke/.agents/skills/bmad-story-automator/src/story_automator/__init__.py
+sed -n '270,360p' /tmp/automator-npm-branch/_npx/d1483d74adee2f79/node_modules/bmad-method/tools/installer/core/manifest.js
+sed -n '600,665p' /tmp/automator-npm-branch/_npx/d1483d74adee2f79/node_modules/bmad-method/tools/installer/core/installer.js
 ```
 
 ### Results
@@ -880,7 +880,7 @@ sed -n '600,665p' /tmp/baut-npm-branch/_npx/d1483d74adee2f79/node_modules/bmad-m
 ### Summary
 
 - Promoted Codex runtime support to stable `v1.15.0`.
-- Fetched current `automator/main` first and found a newer `main` commit, `5196bb2e3bf88b4c7c9e1ad260ff826c372e01b6` (`Rename module code from baut to automator (#10)`).
+- Fetched current `automator/main` first and found a newer `main` commit, `5196bb2e3bf88b4c7c9e1ad260ff826c372e01b6` (module code rename in #10).
 - Created local promotion branch `bma-d/stable-promotion` from `automator/main`.
 - Merged `next/codex-runtime-support` into the promotion branch with no conflicts.
 - Preserved current `main` source truth in `skills/module.yaml`: `code: automator`.
@@ -911,15 +911,15 @@ Verification:
 
 ```bash
 npm run verify
-env HOME=/tmp/baut-home-stable-115 NPM_CONFIG_CACHE=/tmp/baut-npm-stable-115 npx --yes bmad-method@6.6.0 install --modules baut --all-stable --tools codex --yes --directory /tmp/baut-stable-115-smoke
-env HOME=/tmp/baut-home-pin-115 NPM_CONFIG_CACHE=/tmp/baut-npm-pin-115 npx --yes bmad-method@6.6.0 install --modules baut --pin baut=v1.15.0 --tools codex --yes --directory /tmp/baut-pin-115-smoke
-env HOME=/tmp/baut-home-next-main NPM_CONFIG_CACHE=/tmp/baut-npm-next-main npx --yes bmad-method@6.6.0 install --modules baut --tools codex --yes --directory /tmp/baut-next-main-smoke
-test -f /tmp/baut-stable-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-stable-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
-test -f /tmp/baut-pin-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-pin-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
-test -f /tmp/baut-next-main-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
-test -f /tmp/baut-next-main-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+env HOME=/tmp/automator-home-stable-115 NPM_CONFIG_CACHE=/tmp/automator-npm-stable-115 npx --yes bmad-method@6.6.0 install --modules automator --all-stable --tools codex --yes --directory /tmp/automator-stable-115-smoke
+env HOME=/tmp/automator-home-pin-115 NPM_CONFIG_CACHE=/tmp/automator-npm-pin-115 npx --yes bmad-method@6.6.0 install --modules automator --pin automator=v1.15.0 --tools codex --yes --directory /tmp/automator-pin-115-smoke
+env HOME=/tmp/automator-home-next-main NPM_CONFIG_CACHE=/tmp/automator-npm-next-main npx --yes bmad-method@6.6.0 install --modules automator --tools codex --yes --directory /tmp/automator-next-main-smoke
+test -f /tmp/automator-stable-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-stable-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+test -f /tmp/automator-pin-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-pin-115-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
+test -f /tmp/automator-next-main-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/runtime_layout.py
+test -f /tmp/automator-next-main-smoke/.agents/skills/bmad-story-automator/src/story_automator/core/stop_hooks.py
 ```
 
 ### Results
@@ -941,7 +941,7 @@ test -f /tmp/baut-next-main-smoke/.agents/skills/bmad-story-automator/src/story_
 
 ### Decisions And Assumptions
 
-- Continue documenting install commands with official registry code `baut` because the official marketplace registry still lists `code: baut`.
+- Continue documenting install commands with official registry code `automator` because the official marketplace registry still lists `code: automator`.
 - Keep `skills/module.yaml` at `code: automator` because that is now current `automator/main` source truth.
 - Optional npm stable publish remains open/skipped.
 - Stable rollback, if needed, should be a patch tag from last-good stable base or a revert/fix commit; do not move `v1.15.0`.

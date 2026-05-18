@@ -78,25 +78,25 @@ cp -a skills/bmad-story-automator-review /absolute/path/to/project/.claude/skill
 
 ## BMAD Method Install Channels
 
-If you install Automator through the BMAD Method official module code `baut`, choose the channel explicitly.
+If you install Automator through the BMAD Method official module code `automator`, choose the channel explicitly.
 Run these from the target BMAD project root, or add `--directory /absolute/path/to/your-bmad-project`.
 
 Stable install, using the latest pure-semver tag:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes
 ```
 
 Stable pin to the first Codex-capable stable tag:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0 --tools codex --yes
+npx bmad-method install --modules automator --pin automator=v1.15.0 --tools codex --yes
 ```
 
 Rollback to the pre-Codex stable tag if needed:
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes
 ```
 
 Codex preview branch, only for testing unpublished follow-up fixes:
@@ -105,7 +105,7 @@ Codex preview branch, only for testing unpublished follow-up fixes:
 npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes
 ```
 
-Current caveat: the official registry sets `baut` to `default_channel: next`, so unqualified `--modules baut` and `--next baut` resolve to `main` HEAD. After this stable release lands on `main`, those commands include Codex support, but use `--all-stable` or `--pin` when you need reproducible stable behavior. For custom-source branch testing, verify the custom-source cache HEAD and installed runtime files instead of trusting installer exit status, summary text, or manifest channel fields alone.
+Current caveat: the official registry sets `automator` to `default_channel: next`, so unqualified `--modules automator` and `--next automator` resolve to `main` HEAD. After this stable release lands on `main`, those commands include Codex support, but use `--all-stable` or `--pin` when you need reproducible stable behavior. For custom-source branch testing, verify the custom-source cache HEAD and installed runtime files instead of trusting installer exit status, summary text, or manifest channel fields alone.
 
 ## Expectations
 

@@ -31,18 +31,18 @@ BMAD-METHOD already resolves external modules this way:
 - `next`: repository default branch HEAD
 - `pinned`: explicit tag
 
-The official marketplace registry currently sets `baut` to `default_channel: next`. Therefore an unqualified `--modules baut` install resolves to `main` HEAD, not the latest stable tag. Use `--all-stable`, `--channel stable`, or `--pin baut=<stable-tag>` when a stable install is required.
+The official marketplace registry currently sets `automator` to `default_channel: next`. Therefore an unqualified `--modules automator` install resolves to `main` HEAD, not the latest stable tag. Use `--all-stable`, `--channel stable`, or `--pin automator=<stable-tag>` when a stable install is required.
 
-Because official `next` resolves to the default branch, it cannot point at PR #3 unless PR #3 is merged to `main`. For pre-merge testing, use a repo-local integration branch plus a prerelease tag, then install with `--pin baut=<tag>` or `--custom-source <repo>@<branch-or-tag>`.
+Because official `next` resolves to the default branch, it cannot point at PR #3 unless PR #3 is merged to `main`. For pre-merge testing, use a repo-local integration branch plus a prerelease tag, then install with `--pin automator=<tag>` or `--custom-source <repo>@<branch-or-tag>`.
 
 ## Recommended Channel Model
 
 | Channel | Ref Source | Install Path | Registry Change Needed |
 | --- | --- | --- | --- |
-| Stable | `vX.Y.Z` pure semver tag | `--modules baut --all-stable` or `--pin baut=vX.Y.Z` | No |
-| Next preview | `vX.Y.Z-next.N` prerelease tag, after Phase 03 creates it | `--pin baut=vX.Y.Z-next.N` | No |
+| Stable | `vX.Y.Z` pure semver tag | `--modules automator --all-stable` or `--pin automator=vX.Y.Z` | No |
+| Next preview | `vX.Y.Z-next.N` prerelease tag, after Phase 03 creates it | `--pin automator=vX.Y.Z-next.N` | No |
 | Branch preview | `next/codex-runtime-support` branch plus marketplace `skills` entries, after Phase 02 creates it | `--custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support` | No |
-| Registry default next | `main` HEAD | `--modules baut` or `--next baut` | Already configured; useful for PR #3 only after merge |
+| Registry default next | `main` HEAD | `--modules automator` or `--next automator` | Already configured; useful for PR #3 only after merge |
 
 ## Phase Files
 

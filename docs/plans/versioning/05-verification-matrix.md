@@ -68,24 +68,24 @@ Use a disposable BMAD project. Do not run against a real project first.
 ### Registry Default Next
 
 ```bash
-npx bmad-method install --modules baut --tools codex --yes --directory /tmp/baut-default-smoke
+npx bmad-method install --modules automator --tools codex --yes --directory /tmp/automator-default-smoke
 ```
 
 Expected:
 
-- installs `baut`
+- installs `automator`
 - records or reports `main @ <sha>`
 - installed skills match current `main`, not PR #3 unless PR #3 has already been merged
 
 ### Stable Pin
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.14.2 --tools claude-code --yes --directory /tmp/baut-stable-smoke
+npx bmad-method install --modules automator --pin automator=v1.14.2 --tools claude-code --yes --directory /tmp/automator-stable-smoke
 ```
 
 Expected:
 
-- installs `baut`
+- installs `automator`
 - records `channel: pinned`
 - records `version: v1.14.2`
 - installed skills do not include Codex runtime changes
@@ -95,12 +95,12 @@ Expected:
 Run only after Phase 05.5 creates and a remote-enabled agent pushes `v1.15.0-next.1`.
 
 ```bash
-npx bmad-method install --modules baut --pin baut=v1.15.0-next.1 --tools codex --yes --directory /tmp/baut-next-smoke
+npx bmad-method install --modules automator --pin automator=v1.15.0-next.1 --tools codex --yes --directory /tmp/automator-next-smoke
 ```
 
 Expected:
 
-- installs `baut`
+- installs `automator`
 - records `channel: pinned`
 - records `version: v1.15.0-next.1`
 - installed skills include Codex runtime support
@@ -112,7 +112,7 @@ Expected:
 Run only after Phase 02 creates and pushes `next/codex-runtime-support`.
 
 ```bash
-npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/baut-branch-smoke
+npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes --directory /tmp/automator-branch-smoke
 ```
 
 Expected:
@@ -120,17 +120,17 @@ Expected:
 - custom source resolves
 - module discovery finds `.claude-plugin/marketplace.json`
 - plugin resolver finds both skills from the manifest `skills` array
-- installed module code is `baut`
+- installed module code is `automator`
 - installed skills match the branch commit
 - custom-source cache HEAD matches the requested branch commit
-- installed runtime files exist; do not require `_bmad/_config/manifest.yaml` to record the branch ref when the custom source uses the official module code `baut`, because BMAD-METHOD 6.6.0 writes official external-module metadata for that code even when custom-source content is copied
+- installed runtime files exist; do not require `_bmad/_config/manifest.yaml` to record the branch ref when the custom source uses the official module code `automator`, because BMAD-METHOD 6.6.0 writes official external-module metadata for that code even when custom-source content is copied
 
 ## Regression Checks
 
 Confirm stable resolver does not pick prerelease tags:
 
 ```bash
-npx bmad-method install --modules baut --all-stable --tools claude-code --yes --directory /tmp/baut-all-stable-smoke
+npx bmad-method install --modules automator --all-stable --tools claude-code --yes --directory /tmp/automator-all-stable-smoke
 ```
 
 Expected:

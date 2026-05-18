@@ -12,7 +12,7 @@ Create a reproducible next preview without changing the official registry.
 
 ## Why Tags
 
-BMAD-METHOD `stable` ignores prerelease tags because it only selects pure semver releases. `--pin baut=<tag>` can still install a prerelease tag from the official `baut` repo.
+BMAD-METHOD `stable` ignores prerelease tags because it only selects pure semver releases. `--pin automator=<tag>` can still install a prerelease tag from the official `automator` repo.
 
 This gives:
 
