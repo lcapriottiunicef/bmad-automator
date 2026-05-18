@@ -50,9 +50,9 @@ or:
 npx bmad-method install --modules baut --all-stable --tools claude-code --yes
 ```
 
-If custom-source discovery asks which plugin to install after reading the branch, choose `bmad-automator`.
+If custom-source discovery asks which plugin to install after reading the branch, choose `bmad-automator`. For custom-source branch testing, confirm the custom-source cache HEAD and installed runtime files; installer metadata can still report the registry `next` ref when the custom source uses official module code `baut`.
 
-The BMAD Method commands above install through `bmad-method` for the requested `--tools` target. The sections below describe the standalone `npx bmad-story-automator` installer and its multi-root copying behavior.
+The BMAD Method commands above install through `bmad-method` for the requested `--tools` target. The sections below describe the standalone `npx bmad-story-automator` installer and its layout behavior.
 
 ## Installer Flow
 

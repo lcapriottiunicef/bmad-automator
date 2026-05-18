@@ -105,7 +105,7 @@ Codex preview branch, only for testing unpublished follow-up fixes:
 npx bmad-method install --custom-source https://github.com/bmad-code-org/bmad-automator@next/codex-runtime-support --tools codex --yes
 ```
 
-Current caveat: the official registry sets `baut` to `default_channel: next`, so unqualified `--modules baut` and `--next baut` resolve to `main` HEAD. After this stable release lands on `main`, those commands include Codex support, but use `--all-stable` or `--pin` when you need reproducible stable behavior.
+Current caveat: the official registry sets `baut` to `default_channel: next`, so unqualified `--modules baut` and `--next baut` resolve to `main` HEAD. After this stable release lands on `main`, those commands include Codex support, but use `--all-stable` or `--pin` when you need reproducible stable behavior. For custom-source branch testing, verify the custom-source cache HEAD and installed runtime files instead of trusting installer exit status, summary text, or manifest channel fields alone.
 
 ## Expectations
 
