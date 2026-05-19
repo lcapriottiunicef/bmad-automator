@@ -20,10 +20,12 @@
     ".claude-plugin/"
   ],
   "scripts": {
+    "build:python": "python3 -m build skills/bmad-story-automator",
+    "test:cli": "PYTHONPATH=skills/bmad-story-automator/src python3 -m story_automator --help >/dev/null && skills/bmad-story-automator/scripts/story-automator --help >/dev/null",
     "pack:dry-run": "npm pack --dry-run",
     "test:python": "PYTHONPATH=skills/bmad-story-automator/src python3 -m unittest discover -s tests",
     "test:smoke": "bash scripts/smoke-test.sh",
-    "verify": "npm run test:python && npm run pack:dry-run && npm run test:smoke"
+    "verify": "npm run test:python && npm run pack:dry-run && npm run test:cli && npm run test:smoke"
   },
   "engines": {
     "node": ">=18"
