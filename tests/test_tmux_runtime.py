@@ -223,6 +223,48 @@ class TmuxRuntimeStateTests(unittest.TestCase):
         capture = "all tests passed for 3m 10s\n\n❯ "
         self.assertFalse(_claude_completion_marker_present(capture))
 
+    def test_claude_completion_marker_detects_observed_spinner_verbs(self) -> None:
+        observed = [
+            "Cogitated for 3m 45s",
+            "Cooked for 8m 20s",
+            "Brewed for 12m 40s",
+            "Crunched for 5m 41s",
+            "Churned for 7m 34s",
+            "Worked for 13m 29s",
+            "Baked for 4m 55s",
+            "Finished for 2m",
+            "Done for 1m 30s",
+        ]
+        for marker in observed:
+            with self.subTest(marker=marker):
+                self.assertTrue(
+                    _claude_completion_marker_present(marker),
+                    f"should detect completion marker: {marker}",
+                )
+
+    def test_claude_completion_marker_detects_spinner_prefix(self) -> None:
+        capture = "Story created.\n\n✻ Cogitated for 3m 45s\n\n❯ "
+        self.assertTrue(_claude_completion_marker_present(capture))
+
+    def test_claude_completion_marker_rejects_present_participle(self) -> None:
+        in_progress = [
+            "Cogitating for 3m 45s",
+            "Cooking for 8m 20s",
+            "Brewing for 12m",
+            "Baking for 4m 55s",
+            "Thinking for 2m",
+        ]
+        for marker in in_progress:
+            with self.subTest(marker=marker):
+                self.assertFalse(
+                    _claude_completion_marker_present(marker),
+                    f"should NOT match in-progress marker: {marker}",
+                )
+
+    def test_claude_completion_marker_rejects_mid_sentence_ed_words(self) -> None:
+        capture = "Tests completed for 3m 10s\n❯ "
+        self.assertFalse(_claude_completion_marker_present(capture))
+
     def test_reconcile_dead_pane_without_status_maps_to_unknown(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             session = "sa-test-pane-dead-unknown"
