@@ -3,47 +3,101 @@ name: ci
 on:
   pull_request:
   push:
-    branches:
-      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+            package-checks: false
+            smoke: false
+          - os: ubuntu-latest
+            python-version: "3.12"
+            package-checks: true
+            smoke: true
+          - os: ubuntu-latest
+            python-version: "3.13"
+            package-checks: false
+            smoke: false
+          - os: macos-latest
+            python-version: "3.12"
+            package-checks: false
+            smoke: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install Python tooling
+      - name: Install tmux on Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          if ! command -v tmux >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y tmux
+          fi
+
+      - name: Install tmux on macOS
+        if: runner.os == 'macOS'
+        run: |
+          if ! command -v tmux >/dev/null 2>&1; then
+            brew install tmux
+          fi
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+          python --version
+          tmux -V
+
+      - name: Install Python build tooling
+        if: matrix.package-checks
         run: python -m pip install --upgrade pip build
 
-      - name: npm pack dry run
+      - name: Run Python tests
+        run: npm run test:python
+
+      - name: Check npm package contents
+        if: matrix.package-checks
         run: npm run pack:dry-run
 
-      - name: Build wheel
-        run: python -m build skills/bmad-story-automator
+      - name: Build Python package
+        if: matrix.package-checks
+        run: npm run build:python
 
       - name: Install Python package
+        if: matrix.package-checks
         run: python -m pip install ./skills/bmad-story-automator
 
-      - name: Python CLI help
-        run: PYTHONPATH=skills/bmad-story-automator/src python -m story_automator --help
+      - name: Check installed Python CLI
+        if: matrix.package-checks
+        run: |
+          python -m story_automator --help >/dev/null
+          story-automator --help >/dev/null
 
-      - name: Wrapper CLI help
-        run: skills/bmad-story-automator/scripts/story-automator --help
+      - name: Check source-tree CLIs
+        run: npm run test:cli
 
-      - name: Installer smoke
+      - name: Run installer smoke test
+        if: matrix.smoke
         run: npm run test:smoke
