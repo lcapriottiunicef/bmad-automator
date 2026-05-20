@@ -22,9 +22,9 @@ Code-review uses **deterministic agent selection** from the agents file, same as
 resolve_agent_for_task "review" "$state_file" "{story_id}"
 review_agent="$primary_agent"
 review_fallback="$fallback_agent"
-review_model_arg="$primary_model_arg"   # already "--model <id>" or empty
+review_primary_model="$primary_model"   # raw model ID (or empty); bound to review_agent
 
-echo "Code review using: primary=$review_agent, fallback=$review_fallback, model=${primary_model:-<cli default>}"
+echo "Code review using: primary=$review_agent, fallback=$review_fallback, model=${review_primary_model:-<cli default>}"
 ```
 
 **Per-task override example in state document:**
@@ -54,10 +54,19 @@ scripts="$(printf "%s" "{project_root}/<installed-skill-root>/bmad-story-automat
 
 # ⚠️ CRITICAL: --command is REQUIRED - without it, no command runs → never_active failure!
 # Spawn with story-automator tmux-wrapper (handles naming, state cleanup, env vars)
+# Only the primary review agent gets the configured model; cycles that fall
+# back to a different agent (rare for review, but the helper supports it)
+# use the CLI default. `"$review_primary_model"` is always quoted so
+# bracketed IDs like `claude-opus-4-7[1m]` survive shell expansion.
+if [ -n "$review_primary_model" ] && [ "$review_agent" = "$primary_agent" ]; then
+  review_built_cmd=$("$scripts" tmux-wrapper build-cmd review {story_id} --agent "$review_agent" --model "$review_primary_model" --state-file "$state_file")
+else
+  review_built_cmd=$("$scripts" tmux-wrapper build-cmd review {story_id} --agent "$review_agent" --state-file "$state_file")
+fi
 session_name=$("$scripts" tmux-wrapper spawn review {epic} {story_id} \
   --agent "$review_agent" \
   --cycle $reviewCycle \
-  --command "$("$scripts" tmux-wrapper build-cmd review {story_id} --agent "$review_agent" $review_model_arg --state-file "$state_file")")
+  --command "$review_built_cmd")
 ```
 
 ### 2. Monitor Session with Verification (v2.2)

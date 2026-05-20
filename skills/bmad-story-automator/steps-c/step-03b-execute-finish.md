@@ -128,16 +128,17 @@ fi
 2. Log: `- **[{timestamp}]** Epic {epic_number}: ALL STORIES DONE - triggering retrospective`
 
 ```bash
-# CRITICAL: Use build-cmd to get full YOLO prompt with doc verification
+# CRITICAL: Use build-cmd to get full YOLO prompt with doc verification.
+# Pass `"$retro_model"` quoted so bracketed IDs like `claude-opus-4-7[1m]`
+# survive shell expansion intact.
 retro_selection=$("{scriptsDir}" orchestrator-helper retro-agent --state-file "{outputFile}")
 retro_agent=$(echo "$retro_selection" | jq -r '.primary')
 retro_model=$(echo "$retro_selection" | jq -r '.model // ""')
 if [ -n "$retro_model" ]; then
-    retro_model_arg="--model $retro_model"
+    cmd=$("{scriptsDir}" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent" --model "$retro_model")
 else
-    retro_model_arg=""
+    cmd=$("{scriptsDir}" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent")
 fi
-cmd=$("{scriptsDir}" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent" $retro_model_arg)
 session=$("{scriptsDir}" tmux-wrapper spawn retro "" {epic_number} --agent "$retro_agent" --command "$cmd")
 
 # Monitor with safe failure (never escalate on retro failure)

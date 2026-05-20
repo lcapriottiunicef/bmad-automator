@@ -82,12 +82,16 @@ model=$(echo "$selection" | jq -r '.model // ""')
 - Uses epic_number instead of story_id
 
 ```bash
-# For retro, "story_id" parameter is actually the epic_number
+# For retro, "story_id" parameter is actually the epic_number.
+# Always pass "$retro_model" quoted so bracketed IDs survive shell expansion.
 retro_selection=$("$scripts" orchestrator-helper retro-agent --state-file "{state_file}")
 retro_agent=$(echo "$retro_selection" | jq -r '.primary')
 retro_model=$(echo "$retro_selection" | jq -r '.model // ""')
-[ -n "$retro_model" ] && retro_model_arg="--model $retro_model" || retro_model_arg=""
-cmd=$("$scripts" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent" $retro_model_arg)
+if [ -n "$retro_model" ]; then
+    cmd=$("$scripts" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent" --model "$retro_model")
+else
+    cmd=$("$scripts" tmux-wrapper build-cmd retro {epic_number} --agent "$retro_agent")
+fi
 session=$("$scripts" tmux-wrapper spawn retro "" {epic_number} --agent "$retro_agent" --command "$cmd")
 
 # Monitor (retrospectives never block, failures just logged)

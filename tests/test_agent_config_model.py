@@ -75,7 +75,7 @@ class CoreAgentConfigModelTests(unittest.TestCase):
         )
         primary, fallback, model = resolve_agent_for_task(config, "medium", "review")
         self.assertEqual((primary, fallback, model), ("claude", "false", "claude-sonnet-4-6"))
-        primary, fallback, model = resolve_agent_for_task(config, "medium", "dev")
+        _primary, _fallback, model = resolve_agent_for_task(config, "medium", "dev")
         self.assertEqual(model, "claude-opus-4-7[1m]")
 
     def test_complexity_override_wins_over_per_task(self) -> None:
@@ -187,9 +187,9 @@ class OrchestratorEpicAgentsModelTests(unittest.TestCase):
                 }
             )
         )
-        primary, fallback, model = resolve_agent(config, "medium", "review")
+        primary, _fallback, model = resolve_agent(config, "medium", "review")
         self.assertEqual((primary, model), ("claude", "claude-sonnet-4-6"))
-        primary, fallback, model = resolve_agent(config, "medium", "dev")
+        _primary, _fallback, model = resolve_agent(config, "medium", "dev")
         self.assertEqual(model, "claude-opus-4-7")
 
 
@@ -475,6 +475,112 @@ class RetroAgentModelFromStateTests(unittest.TestCase):
         self.assertEqual(code, 0)
         payload = json.loads(stdout.getvalue())
         self.assertEqual(payload["model"], "claude-opus-4-7[1m]")
+
+
+class MarkdownHandoffShellContractTests(unittest.TestCase):
+    """Mirrors the bash pattern used by the workflow markdown snippets.
+
+    Reproduces two regressions that purely-Python argv tests miss:
+      1. fallback attempts must NOT inherit the primary agent's model;
+      2. bracketed model IDs like `claude-opus-4-7[1m]` must reach Python
+         as one literal argv element, even when a matching file exists in cwd.
+
+    The bash snippet exactly mirrors the helper defined in
+    `data/retry-fallback-strategy.md` and the call shape used in
+    `data/retry-fallback-implementation.md`.
+    """
+
+    # Mirrors the helper + call-site pattern used by every workflow snippet.
+    # POSIX-compatible (works under bash 3.2 / dash / zsh).
+    BASH_SNIPPET = r'''
+set -eu
+
+# Mirrors `should_apply_primary_model` in data/retry-fallback-strategy.md.
+should_apply_primary_model() {
+  [ -n "$primary_model" ] && [ "$1" = "$primary_agent" ]
+}
+
+# Stand-in for `tmux-wrapper build-cmd`: a Python child that prints its
+# argv one per line so the test can assert exactly what reached argv.
+if should_apply_primary_model "$current_agent"; then
+  python3 - "$current_agent" --model "$primary_model" <<'PY'
+import sys
+for arg in sys.argv[1:]:
+    print(arg)
+PY
+else
+  python3 - "$current_agent" <<'PY'
+import sys
+for arg in sys.argv[1:]:
+    print(arg)
+PY
+fi
+'''
+
+    def _run(self, *, primary_agent: str, current_agent: str, primary_model: str, cwd) -> list[str]:
+        import subprocess
+        env = {
+            **os.environ,
+            "primary_agent": primary_agent,
+            "current_agent": current_agent,
+            "primary_model": primary_model,
+        }
+        result = subprocess.run(
+            ["bash", "-c", self.BASH_SNIPPET],
+            capture_output=True,
+            check=True,
+            cwd=str(cwd),
+            env=env,
+            text=True,
+        )
+        return result.stdout.splitlines()
+
+    def test_primary_attempt_passes_configured_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = self._run(
+                primary_agent="claude",
+                current_agent="claude",
+                primary_model="claude-sonnet-4-6",
+                cwd=tmp,
+            )
+        # argv layout: <current_agent> [--model <id>]
+        self.assertEqual(argv, ["claude", "--model", "claude-sonnet-4-6"])
+
+    def test_fallback_attempt_does_not_inherit_primary_model(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = self._run(
+                primary_agent="claude",
+                current_agent="codex",
+                primary_model="claude-sonnet-4-6",
+                cwd=tmp,
+            )
+        self.assertEqual(argv, ["codex"])
+        self.assertNotIn("--model", argv)
+        self.assertNotIn("claude-sonnet-4-6", argv)
+
+    def test_bracketed_model_id_survives_shell_expansion(self) -> None:
+        """Repro from bma-d's review comment: a `claude-opus-4-71` file in
+        cwd must not cause `claude-opus-4-7[1m]` to glob-expand."""
+        with tempfile.TemporaryDirectory() as tmp:
+            # File whose name matches the bracketed glob pattern
+            (Path(tmp) / "claude-opus-4-71").write_text("decoy\n")
+            argv = self._run(
+                primary_agent="claude",
+                current_agent="claude",
+                primary_model="claude-opus-4-7[1m]",
+                cwd=tmp,
+            )
+        self.assertEqual(argv, ["claude", "--model", "claude-opus-4-7[1m]"])
+
+    def test_no_model_configured_emits_no_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            argv = self._run(
+                primary_agent="claude",
+                current_agent="claude",
+                primary_model="",
+                cwd=tmp,
+            )
+        self.assertEqual(argv, ["claude"])
 
 
 if __name__ == "__main__":

@@ -35,24 +35,31 @@ resolve_agent_for_task() {
 
     primary_agent=$(echo "$result" | jq -r '.primary')
     fallback_agent=$(echo "$result" | jq -r '.fallback')
+    # Raw model ID for the primary agent only. Sentinels (auto/default/false/
+    # none/null) are already filtered upstream by `agents-resolve`, so any
+    # non-empty value is a real model ID. NEVER pre-build a shell fragment —
+    # bracketed IDs like `claude-opus-4-7[1m]` glob-expand when unquoted.
     primary_model=$(echo "$result" | jq -r '.model // ""')
 
     # Handle "false"/null meaning disabled
     [ "$fallback_agent" = "false" ] && fallback_agent=""
+}
 
-    # Build `--model <id>` shell fragment (empty when no model is configured).
-    # Sentinel values (auto/default/false/none/null) are already filtered upstream
-    # by `orchestrator-helper agents-resolve`, so a non-empty value is real.
-    if [ -n "$primary_model" ]; then
-        primary_model_arg="--model $primary_model"
-    else
-        primary_model_arg=""
-    fi
+# Decide whether the current attempt should pass `--model` to `build-cmd`.
+# Returns 0 (true) ONLY when the agent running this attempt is the primary,
+# since `agentConfig.<task>.model` is bound to the primary agent. Fallback
+# retries fall back to the CLI's default model.
+#
+# Use at the call site to branch — DO NOT pre-build a `--model <id>` shell
+# fragment, because bracketed IDs like `claude-opus-4-7[1m]` glob-expand
+# when expanded unquoted. Always pass `"$primary_model"` quoted.
+should_apply_primary_model() {
+    [ -n "$primary_model" ] && [ "$1" = "$primary_agent" ]
 }
 
 # Usage:
 resolve_agent_for_task "review" "$state_file" "{story_id}"
-echo "Review task: primary=$primary_agent, fallback=$fallback_agent, model=${primary_model:-<cli default>}"
+echo "Review task: primary=$primary_agent, fallback=$fallback_agent, primary_model=${primary_model:-<cli default>}"
 ```
 
 **Fallback behavior:**
