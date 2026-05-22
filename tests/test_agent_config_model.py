@@ -342,7 +342,18 @@ class StateDocSentinelOmissionTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def test_sentinel_models_are_omitted_from_state(self) -> None:
+    def test_sentinel_models_are_preserved_as_empty_in_state(self) -> None:
+        """An explicit sentinel (`model: "none"` etc.) is a real signal —
+        "clear any inherited defaultModel". The persisted YAML MUST keep
+        the key present (normalized to `model: ""`) so the round-trip
+        through `_load_agent_config_from_state` + `resolve_agent` honors
+        the opt-out instead of silently inheriting `defaultModel`.
+
+        Regression for bma-d's review of 5ada2c2: previously sentinels
+        were dropped from state, which made the persisted file look the
+        same as "key absent" and caused retro/dev tasks to re-inherit
+        `defaultModel` after state was reloaded.
+        """
         template = self.project_root / ".claude" / "skills" / "bmad-story-automator" / "templates" / "state-document.md"
         output_dir = self.project_root / "_bmad-output" / "story-automator"
         config = {
@@ -354,7 +365,7 @@ class StateDocSentinelOmissionTests(unittest.TestCase):
             "agentConfig": {
                 "defaultPrimary": "claude",
                 "defaultFallback": False,
-                # sentinel — should NOT appear in serialized YAML
+                # Sentinels at every layer: top-level, per-task, complexity-override.
                 "defaultModel": "auto",
                 "perTask": {
                     "review": {"primary": "claude", "fallback": False, "model": "none"},
@@ -380,13 +391,111 @@ class StateDocSentinelOmissionTests(unittest.TestCase):
         self.assertEqual(code, 0)
         state_path = Path(json.loads(stdout.getvalue())["path"])
         text = state_path.read_text(encoding="utf-8")
-        # Sentinels never serialized
-        self.assertNotIn('defaultModel:', text)
+        # Sentinels are normalized to "" but the KEY is preserved so the
+        # opt-out survives the round-trip.
+        self.assertIn('defaultModel: ""', text)
+        # `review.model: "none"` becomes `model: ""` (sentinel for "clear default").
+        self.assertRegex(text, r'review:\n      primary: "claude"\n      fallback: false\n      model: ""')
+        # Complexity-override sentinel preserved the same way.
+        self.assertRegex(text, r'high:\n      review:\n        primary: "claude"\n        model: ""')
+        # Real ID still survives unchanged.
+        self.assertIn('model: "claude-opus-4-7[1m]"', text)
+        # The raw sentinel strings must NOT appear (we normalize on write so
+        # the persisted form is canonical and stable across saves).
         self.assertNotIn('model: "auto"', text)
         self.assertNotIn('model: "none"', text)
         self.assertNotIn('model: "false"', text)
-        # Real value still survives
-        self.assertIn('model: "claude-opus-4-7[1m]"', text)
+
+    def test_absent_model_key_still_inherits_default_model_after_roundtrip(self) -> None:
+        """The counter-case: a perTask entry that omits `model` must NOT
+        gain a `model: ""` line during persistence — that would change
+        the semantics from "inherit defaultModel" to "explicit opt-out".
+        """
+        template = self.project_root / ".claude" / "skills" / "bmad-story-automator" / "templates" / "state-document.md"
+        output_dir = self.project_root / "_bmad-output" / "story-automator"
+        config = {
+            "epic": "9",
+            "epicName": "Trust & Safety",
+            "storyRange": ["9.1"],
+            "status": "READY",
+            "aiCommand": "claude --dangerously-skip-permissions",
+            "agentConfig": {
+                "defaultPrimary": "claude",
+                "defaultModel": "claude-opus-4-7[1m]",
+                "perTask": {
+                    # No `model` key — must inherit defaultModel after round-trip.
+                    "review": {"primary": "claude", "fallback": False},
+                },
+            },
+        }
+        stdout = io.StringIO()
+        with patch.dict(os.environ, {"PROJECT_ROOT": str(self.project_root)}, clear=False), redirect_stdout(stdout):
+            code = cmd_build_state_doc(
+                [
+                    "--template",
+                    str(template),
+                    "--output-folder",
+                    str(output_dir),
+                    "--config-json",
+                    json.dumps(config),
+                ]
+            )
+        self.assertEqual(code, 0)
+        state_path = Path(json.loads(stdout.getvalue())["path"])
+        text = state_path.read_text(encoding="utf-8")
+        # No `model:` line under `review` — inheritance is signaled by absence.
+        self.assertRegex(text, r'review:\n      primary: "claude"\n      fallback: false\n')
+        self.assertNotRegex(text, r'review:[^a-zA-Z]+primary: "claude"\n      fallback: false\n      model:')
+
+    def test_state_roundtrip_preserves_explicit_opt_out_for_retro(self) -> None:
+        """End-to-end repro from bma-d's review of e256244: state-backed
+        `retro-agent` must report `model: ""` (not the inherited
+        defaultModel) when the config opted retro out explicitly.
+        """
+        template = self.project_root / ".claude" / "skills" / "bmad-story-automator" / "templates" / "state-document.md"
+        output_dir = self.project_root / "_bmad-output" / "story-automator"
+        config = {
+            "epic": "9",
+            "epicName": "Repro",
+            "storyRange": ["9.1"],
+            "status": "READY",
+            "aiCommand": "claude --dangerously-skip-permissions",
+            "agentConfig": {
+                "defaultPrimary": "claude",
+                "defaultFallback": False,
+                "defaultModel": "claude-opus-4-7[1m]",
+                "perTask": {
+                    "retro": {"primary": "claude", "fallback": False, "model": "none"},
+                },
+            },
+        }
+        stdout = io.StringIO()
+        with patch.dict(os.environ, {"PROJECT_ROOT": str(self.project_root)}, clear=False), redirect_stdout(stdout):
+            code = cmd_build_state_doc(
+                [
+                    "--template",
+                    str(template),
+                    "--output-folder",
+                    str(output_dir),
+                    "--config-json",
+                    json.dumps(config),
+                ]
+            )
+        self.assertEqual(code, 0)
+        state_path = Path(json.loads(stdout.getvalue())["path"])
+
+        # Now reload via the same code path the workflow uses and check
+        # `retro-agent` honors the explicit opt-out.
+        stdout = io.StringIO()
+        with patch.dict(os.environ, {"PROJECT_ROOT": str(self.project_root)}, clear=False), redirect_stdout(stdout):
+            code = cmd_orchestrator_helper(["retro-agent", "--state-file", str(state_path)])
+        self.assertEqual(code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(
+            payload["model"], "",
+            "retro.model='none' must clear inherited defaultModel through the state round-trip "
+            "(actual payload: %r)" % payload,
+        )
 
     def _install_bundle(self) -> None:
         source_skill = REPO_ROOT / "skills" / "bmad-story-automator"
