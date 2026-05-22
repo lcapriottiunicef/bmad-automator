@@ -54,6 +54,9 @@ If custom-source discovery asks which plugin to install after reading the branch
 
 The BMAD Method commands above install through `bmad-method` for the requested `--tools` target. The sections below describe the standalone `npx bmad-story-automator` installer and its layout behavior.
 
+Maintainers should use [Versioning And Release Channels](./versioning.md) when
+updating stable tags, preview tags, registry `next`, or npm dist-tags.
+
 ## Installer Flow
 
 ```mermaid
@@ -212,3 +215,4 @@ No installer-only payload tree exists. The installer copies the same skill folde
 - [How It Works](./how-it-works.md)
 - [CLI Reference](./cli-reference.md)
 - [Development](./development.md)
+- [Versioning And Release Channels](./versioning.md)

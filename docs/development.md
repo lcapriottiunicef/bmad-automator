@@ -101,7 +101,11 @@ Recommended release checklist:
 4. confirm README and docs match shipped behavior
 5. publish
 
+For BMAD Method stable tags, preview tags, registry `next`, and npm dist-tags,
+use [Versioning And Release Channels](./versioning.md).
+
 ## Read Next
 
 - [Installation And Layout](./installation-and-layout.md)
 - [CLI Reference](./cli-reference.md)
+- [Versioning And Release Channels](./versioning.md)

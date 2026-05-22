@@ -252,3 +252,6 @@ Publish steps:
 - `npm publish`
 
 More: [Development](./docs/development.md#release)
+
+For BMAD Method stable tags, preview tags, registry `next`, and npm dist-tags,
+see [Versioning And Release Channels](./docs/versioning.md).
