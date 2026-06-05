@@ -25,7 +25,7 @@ def _current_skills_root() -> Path | None:
     for parent in Path(__file__).resolve().parents:
         if parent.name == STORY_SKILL_NAME and parent.parent.name == "skills":
             skills_root = parent.parent.resolve()
-            if skills_root.parent.name in {".agents", ".claude", ".codex"}:
+            if skills_root.parent.name in {".agents", ".claude", ".codex", ".opencode"}:
                 return skills_root
     return None
 
@@ -44,6 +44,7 @@ def candidate_skills_roots(project_root: str | Path | None = None) -> list[Path]
             root / ".agents" / "skills",
             root / ".claude" / "skills",
             root / ".codex" / "skills",
+            root / ".opencode" / "skills",
             Path.home() / ".codex" / "skills",
             Path.home() / ".claude" / "skills",
         ]
@@ -115,6 +116,8 @@ def _infer_provider_from_root(skills_root: Path | None) -> str:
     parent = resolved.parent.name
     if parent == ".claude" or ".claude" in parts:
         return "claude"
+    if parent == ".opencode" or ".opencode" in parts:
+        return "opencode"
     if parent in {".agents", ".codex"} or ".agents" in parts or ".codex" in parts:
         return "codex"
     return ""
@@ -126,7 +129,7 @@ def runtime_provider(project_root: str | Path | None = None) -> str:
     # follow the installed skill root in mixed or migrated workspaces.
     for name in ("BMAD_RUNTIME_PROVIDER", "STORY_AUTOMATOR_RUNTIME_PROVIDER"):
         raw = os.environ.get(name, "").strip().lower()
-        if raw in {"claude", "codex"}:
+        if raw in {"claude", "codex", "opencode"}:
             return raw
     inferred = _infer_provider_from_root(_configured_skills_root())
     if inferred:
@@ -161,13 +164,15 @@ def active_marker_path(project_root: str | Path | None = None) -> Path:
         has_story_skill = _skill_present(story_skill_dir)
         explicit_root = bool(explicit and skills_root.resolve() == explicit.resolve())
         current_root = bool(current and skills_root.resolve() == current.resolve())
-        if skills_root.parent.name in {".claude", ".agents", ".codex"} and (has_story_skill or explicit_root or current_root):
+        if skills_root.parent.name in {".claude", ".agents", ".codex", ".opencode"} and (has_story_skill or explicit_root or current_root):
             return (skills_root.parent / ACTIVE_MARKER_NAME).resolve()
     except ValueError:
         pass
 
     if provider == "codex":
         return (root / ".agents" / ACTIVE_MARKER_NAME).resolve()
+    if provider == "opencode":
+        return (root / ".opencode" / ACTIVE_MARKER_NAME).resolve()
     return (root / ".claude" / ACTIVE_MARKER_NAME).resolve()
 
 
@@ -186,7 +191,7 @@ def resolve_portable_path(path_value: str, project_root: str | Path | None = Non
     for prefix in neutral_prefixes:
         if normalized.startswith(prefix):
             return _resolve_skill_relative_path(normalized[len(prefix) :], project_root)
-    for prefix in (".claude/skills/", ".agents/skills/", ".codex/skills/"):
+    for prefix in (".claude/skills/", ".agents/skills/", ".codex/skills/", ".opencode/skills/"):
         if not normalized.startswith(prefix):
             continue
         return _resolve_skill_relative_path(normalized[len(prefix) :], project_root)

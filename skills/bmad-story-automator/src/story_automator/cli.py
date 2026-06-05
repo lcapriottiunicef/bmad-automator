@@ -13,6 +13,7 @@ from .commands.basic import (
     cmd_stop_hook,
 )
 from .commands.orchestrator import cmd_orchestrator_helper
+from .commands.opencode_dispatch import cmd_opencode_dispatch
 from .commands.state import cmd_build_state_doc, cmd_sprint_compare, cmd_state_metrics, cmd_validate_state
 from .commands.tmux import cmd_codex_status_check, cmd_heartbeat_check, cmd_monitor_session, cmd_tmux_status_check, cmd_tmux_wrapper
 from .commands.validate_story_creation import cmd_validate_story_creation
@@ -55,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         "tmux-status-check": cmd_tmux_status_check,
         "monitor-session": cmd_monitor_session,
         "orchestrator-helper": cmd_orchestrator_helper,
+        "opencode-dispatch": cmd_opencode_dispatch,
         "agent-config": cmd_agent_config,
     }
     handler = commands.get(command)
@@ -91,6 +93,7 @@ def _usage(stream: object) -> None:
         "tmux-status-check",
         "monitor-session",
         "orchestrator-helper",
+        "opencode-dispatch",
         "agent-config",
     ):
         print(f"  {name}", file=stream)

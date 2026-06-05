@@ -13,7 +13,7 @@ VALID_TOP_LEVEL_KEYS = {"version", "snapshot", "runtime", "workflow", "steps"}
 VALID_STEP_NAMES = {"create", "dev", "auto", "review", "retro"}
 VALID_VERIFIERS = {"create_story_artifact", "session_exit", "review_completion", "epic_complete"}
 VALID_ASSET_NAMES = {"skill", "workflow", "instructions", "checklist", "template"}
-VALID_PARSER_PROVIDERS = {"claude"}
+VALID_PARSER_PROVIDERS = {"claude", "opencode"}
 
 
 def load_bundled_policy(project_root: str | None = None, *, resolve_assets: bool = True) -> dict[str, Any]:

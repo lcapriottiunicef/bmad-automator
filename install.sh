@@ -17,6 +17,7 @@ Supported skill roots:
   .agents/skills
   .claude/skills
   .codex/skills
+  .opencode/skills
 
 If more than one supported root is complete, all complete roots are updated.
 
@@ -75,7 +76,7 @@ backup_legacy_story_automator_installs() {
 
 wrapper_points_to_skill_tree() {
   local shim="$1"
-  grep -Eq '\.(claude|agents|codex)/skills/' "$shim"
+  grep -Eq '\.(claude|agents|codex|opencode)/skills/' "$shim"
 }
 
 wrapper_points_to_legacy_target() {
@@ -175,7 +176,7 @@ skill_root_has_any_required_asset() {
 
 collect_target_skills_roots() {
   local candidate
-  local candidates=(".agents/skills" ".claude/skills" ".codex/skills")
+  local candidates=(".agents/skills" ".claude/skills" ".codex/skills" ".opencode/skills")
 
   for candidate in "${candidates[@]}"; do
     if skill_root_has_required_entrypoints "$candidate"; then
@@ -187,7 +188,7 @@ collect_target_skills_roots() {
 select_single_incomplete_diagnostic_root() {
   local candidate
   local found=""
-  local candidates=(".agents/skills" ".claude/skills" ".codex/skills")
+  local candidates=(".agents/skills" ".claude/skills" ".codex/skills" ".opencode/skills")
 
   for candidate in "${candidates[@]}"; do
     if skill_root_has_any_required_asset "$candidate"; then
@@ -282,7 +283,7 @@ if [ "${#TARGET_SKILLS_RELS[@]}" -eq 0 ]; then
     resolve_required_skill "bmad-dev-story" >/dev/null
     resolve_required_skill "bmad-retrospective" >/dev/null
   fi
-  err "Required dependency skills not found under any supported skill root (.agents/skills, .claude/skills, .codex/skills). Install bmad-create-story, bmad-dev-story, and bmad-retrospective under at least one supported root before running this installer."
+  err "Required dependency skills not found under any supported skill root (.agents/skills, .claude/skills, .codex/skills, .opencode/skills). Install bmad-create-story, bmad-dev-story, and bmad-retrospective under at least one supported root before running this installer."
 fi
 
 backup_legacy_story_automator_installs

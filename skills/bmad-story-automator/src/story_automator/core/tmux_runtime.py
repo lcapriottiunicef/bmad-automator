@@ -80,13 +80,17 @@ def generate_session_name(step: str, epic: str, story_id: str, cycle: str = "") 
 
 def agent_type() -> str:
     value = os.environ.get("AI_AGENT", "").strip().lower()
-    if value in {"claude", "codex"}:
+    if value in {"claude", "codex", "opencode"}:
         return value
     return runtime_provider()
 
 
 def agent_cli(agent: str, model: str = "") -> str:
     model = (model or "").strip()
+    if agent == "opencode":
+        # OpenCode uses native task dispatch — no CLI command needed.
+        # The orchestrator handles dispatch via the task tool.
+        return "opencode-native-dispatch"
     if agent == "codex":
         base = "codex exec"
     else:
@@ -97,7 +101,34 @@ def agent_cli(agent: str, model: str = "") -> str:
 
 
 def skill_prefix(agent: str) -> str:
-    return "none" if agent == "codex" else "bmad-"
+    if agent == "codex":
+        return "none"
+    if agent == "opencode":
+        # OpenCode uses @skills/ prefix (no bmad- prefix needed)
+        return ""
+    return "bmad-"
+
+
+def opencode_task_dispatch(
+    step: str,
+    prompt: str,
+    *,
+    model: str = "",
+    subagent_type: str = "coder",
+) -> dict[str, str]:
+    """Generate opencode task tool dispatch payload.
+
+    Returns a JSON-serializable dict that the orchestrator reads and
+    passes to the opencode task tool. The task tool spawns a sub-agent
+    with the given prompt, eliminating tmux session management entirely.
+    """
+    return {
+        "dispatch": "opencode_task",
+        "step": step,
+        "prompt": prompt,
+        "model": model,
+        "subagent_type": subagent_type,
+    }
 
 
 def _artifact_base_dir() -> Path:
@@ -242,6 +273,10 @@ def spawn_session(
     project_root: str | None = None,
     mode: str | None = None,
 ) -> tuple[str, int]:
+    if selected_agent == "opencode":
+        # OpenCode uses native task dispatch — no tmux session needed.
+        # The orchestrator dispatches tasks via the task tool.
+        return ("opencode-native-dispatch", 0)
     resolved_mode = _resolve_spawn_mode(mode)
     if resolved_mode == "legacy":
         return _spawn_legacy(session, command, selected_agent, project_root)
@@ -257,6 +292,10 @@ def heartbeat_check(
 ) -> tuple[str, float, str, str]:
     if not session:
         return ("error", 0.0, "", "no_session")
+    if selected_agent == "opencode":
+        # OpenCode tasks are fire-and-forget — no heartbeat polling.
+        # Task completion is detected via task tool return.
+        return ("native", 0.0, "", "opencode_task")
 
     resolved_mode = _status_mode(session, project_root, mode)
     if resolved_mode == "legacy":
@@ -299,6 +338,16 @@ def session_status(
     project_root: str | None = None,
     mode: str | None = None,
 ) -> dict[str, str | int]:
+    if not codex and session.startswith("opencode-"):
+        # OpenCode uses native task dispatch — no tmux session to poll.
+        return {
+            "status": "native",
+            "todos_done": 0,
+            "todos_total": 0,
+            "active_task": "opencode_task",
+            "wait_estimate": 0,
+            "session_state": "native_dispatch",
+        }
     resolved_mode = _status_mode(session, project_root, mode)
     if resolved_mode == "legacy":
         return _legacy_session_status(session, full=full, codex=codex, project_root=project_root)

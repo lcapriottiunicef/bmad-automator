@@ -202,6 +202,18 @@ def _build_cmd(args: list[str]) -> int:
     ai_command = os.environ.get("AI_COMMAND", "").strip()
     if ai_command and not os.environ.get("AI_AGENT"):
         cli = ai_command
+    elif agent == "opencode":
+        # OpenCode: generate task dispatch payload as JSON
+        import json as _json
+        payload = {
+            "dispatch": "opencode_task",
+            "step": step,
+            "storyId": story_id,
+            "prompt": prompt,
+            "model": model,
+        }
+        print(_json.dumps(payload))
+        return 0
     elif agent != "codex":
         cli = agent_cli(agent, model)
     else:
@@ -474,7 +486,7 @@ def _raw_agent_selection() -> str:
         inferred = _infer_agent_from_command(os.environ.get("AI_COMMAND", ""))
         if inferred:
             return inferred
-    return value if value in {"claude", "codex", "auto", "runtime"} else "auto"
+    return value if value in {"claude", "codex", "opencode", "auto", "runtime"} else "auto"
 
 
 def _resolve_agent_selection(agent: str, project_root: str) -> str:
@@ -494,4 +506,6 @@ def _infer_agent_from_command(command: str) -> str:
         return "codex"
     if "claude" in executable:
         return "claude"
+    if "opencode" in executable:
+        return "opencode"
     return ""

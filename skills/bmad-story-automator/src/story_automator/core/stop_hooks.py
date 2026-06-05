@@ -45,6 +45,16 @@ def ensure_stop_hook(
     command: str,
     timeout: int,
 ) -> dict[str, Any]:
+    if provider == "opencode":
+        # OpenCode uses native lifecycle (session.idle / process teardown).
+        # No stop-hook installation needed — fire-and-forget model.
+        return {
+            "changed": False,
+            "reason": "skipped_opencode_native_lifecycle",
+            "provider": "opencode",
+            "path": "",
+            "message": "Stop hooks skipped: OpenCode uses native lifecycle (session.idle / process teardown).",
+        }
     if provider == "codex":
         return ensure_codex_stop_hook(project_root=project_root, command=command, timeout=timeout)
     if not settings_path:

@@ -75,6 +75,7 @@ def cmd_orchestrator_helper(args: list[str]) -> int:
         "agents-build": agents_build_action,
         "agents-resolve": agents_resolve_action,
         "retro-agent": retro_agent_action,
+        "opencode-status": _opencode_status,
     }
     handler = dispatch.get(action)
     if handler is None:
@@ -113,6 +114,7 @@ def _usage(code: int) -> int:
     print("  agents-build --state-file path --complexity-file path --output path --config-json '{}'", file=target)
     print("  agents-resolve (--state-file path | --agents-file path) --story ID --task create|dev|auto|review", file=target)
     print("  retro-agent --state-file path", file=target)
+    print("  opencode-status [step] [story_id]", file=target)
     return code
 
 
@@ -508,3 +510,31 @@ def _flag_value(args: list[str], idx: int, flag: str) -> str:
     if idx + 1 >= len(args) or not args[idx + 1].strip() or args[idx + 1].startswith("--"):
         raise PolicyError(f"{flag} requires a value")
     return args[idx + 1]
+
+
+def _opencode_status(args: list[str]) -> int:
+    """Report OpenCode native dispatch status.
+
+    Usage: orchestrator-helper opencode-status [step] [story_id]
+
+    Since OpenCode tasks are fire-and-forget (no tmux heartbeat polling),
+    this command provides a simple status check for the orchestrating agent.
+    """
+    step = args[0] if args else ""
+    story_id = args[1] if len(args) > 1 else ""
+    payload = {
+        "ok": True,
+        "provider": "opencode",
+        "dispatchMode": "native_task_tool",
+        "heartbeatSupported": False,
+        "outputCapture": "task_result_only",
+        "step": step,
+        "storyId": story_id,
+        "message": (
+            "OpenCode uses native task dispatch. Tasks are fire-and-forget. "
+            "Progress is visible in the task tool's streaming output. "
+            "Completion is detected via task tool return value."
+        ),
+    }
+    print_json(payload)
+    return 0
