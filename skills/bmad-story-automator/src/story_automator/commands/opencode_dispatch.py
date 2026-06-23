@@ -62,11 +62,17 @@ def cmd_opencode_dispatch(args: list[str]) -> int:
     tail = args[2:]
     idx = 0
     while idx < len(tail):
-        if tail[idx] == "--model" and idx + 1 < len(tail):
+        if tail[idx] == "--model":
+            if idx + 1 >= len(tail):
+                print("--model requires a value", file=sys.stderr)
+                return 1
             model = tail[idx + 1]
             idx += 2
             continue
-        if tail[idx] == "--state-file" and idx + 1 < len(tail):
+        if tail[idx] == "--state-file":
+            if idx + 1 >= len(tail):
+                print("--state-file requires a value", file=sys.stderr)
+                return 1
             state_file = tail[idx + 1]
             idx += 2
             continue
@@ -164,22 +170,18 @@ def _resolve_model_from_config(step: str) -> str:
 
         key, value = line.split(":", 1)
         key = key.strip()
-        value = value.strip().strip('"').strip("'")
+        value = unquote_scalar(value.strip())
+
+        is_top_level = raw_line == raw_line.lstrip(" \t")
+        if is_top_level:
+            in_models = False
+            in_opencode = key == "opencode"
+            continue
 
         # Track nesting: opencode > models
-        if key == "opencode":
-            in_opencode = True
-            in_models = False
-            continue
         if in_opencode and key == "models":
             in_models = True
             continue
-
-        # Reset nesting when indent level decreases (new top-level key)
-        is_top_level = raw_line == raw_line.lstrip(" \t")
-        if is_top_level:
-            in_opencode = False
-            in_models = False
 
         # Capture model values under opencode.models
         if in_opencode and in_models and value:
