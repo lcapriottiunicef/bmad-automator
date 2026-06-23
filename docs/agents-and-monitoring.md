@@ -28,7 +28,7 @@ The automator detects the active harness by checking the project root for harnes
 | Codex | `.codex/` directory exists |
 | OpenCode | `.opencode/` directory exists |
 
-When multiple harnesses are detected, the priority order is: OpenCode > Codex > Claude. The `BMM_AGENT` environment variable can override this.
+When multiple harnesses are detected, the priority order is: OpenCode > Codex > Claude. The `BMAD_RUNTIME_PROVIDER` or `STORY_AUTOMATOR_RUNTIME_PROVIDER` environment variable can override this (set to `claude`, `codex`, or `opencode`).
 
 ## Agent Resolution
 
@@ -72,17 +72,6 @@ When OpenCode is detected as the harness, the automator generates a JSON dispatc
 
 The orchestrating OpenCode agent reads this payload and calls its native `task` tool with the rendered prompt.
 
-Example dispatch payload:
-
-```json
-{
-    "dispatch": "opencode_task",
-    "step": "dev",
-    "storyId": "1.2",
-    "prompt": "... rendered step prompt ...",
-    "model": "gpt-4o",
-    "subagent_type": "coder"
-}
 ```
 
 Key differences from tmux-based harnesses:

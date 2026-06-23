@@ -532,7 +532,7 @@ def _opencode_status(args: list[str]) -> int:
         "storyId": story_id,
         "message": (
             "OpenCode uses native task dispatch. Tasks are fire-and-forget. "
-            "Progress is visible in the task tool's streaming output. "
+            "Live output streaming is not available in this harness. "
             "Completion is detected via task tool return value."
         ),
     }

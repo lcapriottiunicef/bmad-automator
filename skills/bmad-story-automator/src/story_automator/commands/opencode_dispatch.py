@@ -23,7 +23,13 @@ from story_automator.core.agent_config import normalize_model
 from story_automator.core.prompt_rendering import render_step_prompt
 from story_automator.core.runtime_policy import PolicyError, load_runtime_policy, step_contract
 from story_automator.core.runtime_layout import runtime_provider
-from story_automator.core.utils import get_project_root, print_json, read_text, strip_inline_yaml_comment
+from story_automator.core.utils import (
+    get_project_root,
+    print_json,
+    read_text,
+    strip_inline_yaml_comment,
+    unquote_scalar,
+)
 
 # Default subagent type when not overridden by config
 DEFAULT_SUBAGENT_TYPE = "coder"
@@ -88,15 +94,19 @@ def cmd_opencode_dispatch(args: list[str]) -> int:
         print(str(exc), file=sys.stderr)
         return 1
 
-    # Map step names to subagent_type for the task tool
-    subagent_map = {
-        "create": "coder",
-        "dev": "coder",
-        "auto": "coder",
-        "review": "reviewer",
-        "retro": "coder",
-    }
-    subagent_type = subagent_map.get(step, "coder")
+    configured_subagent_type = _resolve_subagent_type_from_config()
+    if configured_subagent_type:
+        subagent_type = configured_subagent_type
+    else:
+        # Map step names to subagent_type for the task tool
+        subagent_map = {
+            "create": "coder",
+            "dev": "coder",
+            "auto": "coder",
+            "review": "reviewer",
+            "retro": "coder",
+        }
+        subagent_type = subagent_map.get(step, DEFAULT_SUBAGENT_TYPE)
 
     payload = {
         "dispatch": "opencode_task",
@@ -129,7 +139,7 @@ def _resolve_model_from_config(step: str) -> str:
 
     try:
         raw = read_text(config_path)
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         return ""
 
     # Simple parser: extract opencode.models.<key> values
@@ -147,7 +157,8 @@ def _resolve_model_from_config(step: str) -> str:
     models: dict[str, str] = {}
 
     for raw_line in raw.splitlines():
-        line = strip_inline_yaml_comment(raw_line).strip()
+        cleaned = strip_inline_yaml_comment(raw_line).rstrip()
+        line = cleaned.strip()
         if not line or ":" not in line:
             continue
 
@@ -165,7 +176,8 @@ def _resolve_model_from_config(step: str) -> str:
             continue
 
         # Reset nesting when indent level decreases (new top-level key)
-        if not line.startswith(" ") and not line.startswith("\t"):
+        is_top_level = raw_line == raw_line.lstrip(" \t")
+        if is_top_level:
             in_opencode = False
             in_models = False
 
@@ -182,6 +194,42 @@ def _resolve_model_from_config(step: str) -> str:
     orchestrator_model = models.get("orchestrator")
     if orchestrator_model:
         return normalize_model(orchestrator_model)
+
+    return ""
+
+
+def _resolve_subagent_type_from_config() -> str:
+    """Read opencode.subagent_type from _bmad/bmm/config.yaml."""
+    root = get_project_root()
+    config_path = Path(root) / "_bmad" / "bmm" / "config.yaml"
+    if not config_path.is_file():
+        return ""
+
+    try:
+        raw = read_text(config_path)
+    except (OSError, UnicodeDecodeError):
+        return ""
+
+    in_opencode_block = False
+    for raw_line in raw.splitlines():
+        cleaned = strip_inline_yaml_comment(raw_line).rstrip()
+        line = cleaned.strip()
+        if not line:
+            continue
+
+        is_top_level = raw_line == raw_line.lstrip(" \t")
+        if is_top_level and line == "opencode:":
+            in_opencode_block = True
+            continue
+        if is_top_level and in_opencode_block:
+            in_opencode_block = False
+
+        if not in_opencode_block or ":" not in line:
+            continue
+
+        key, value = line.split(":", 1)
+        if key.strip() == "subagent_type":
+            return unquote_scalar(value.strip())
 
     return ""
 

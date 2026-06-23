@@ -205,12 +205,21 @@ def _build_cmd(args: list[str]) -> int:
     elif agent == "opencode":
         # OpenCode: generate task dispatch payload as JSON
         import json as _json
+        subagent_map = {
+            "create": "coder",
+            "dev": "coder",
+            "auto": "coder",
+            "review": "reviewer",
+            "retro": "coder",
+        }
+        subagent_type = subagent_map.get(step, "coder")
         payload = {
             "dispatch": "opencode_task",
             "step": step,
             "storyId": story_id,
             "prompt": prompt,
             "model": model,
+            "subagent_type": subagent_type,
         }
         print(_json.dumps(payload))
         return 0
